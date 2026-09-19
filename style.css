@@ -1,0 +1,480 @@
+:root {
+  --bg-color: #0d0f17;
+  --card-bg: #161b26;
+  --accent-color: #ff4757;
+  --primary-glow: #2ed573;
+  --gold-color: #ffa502;
+  --text-main: #ffffff;
+  --text-sub: #a4b0be;
+  --border-color: #2f3542;
+  --nav-bg: #141824;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  user-select: none;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  padding-bottom: 70px;
+  overflow-x: hidden;
+}
+
+/* Loading Screen */
+.loading-screen {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--bg-color);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loader-content {
+  text-align: center;
+}
+
+.gaming-spinner {
+  width: 60px;
+  height: 60px;
+  border: 5px solid var(--border-color);
+  border-top: 5px solid var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.lang-selector-box {
+  margin-top: 20px;
+  background: var(--card-bg);
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.lang-btn-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.lang-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: var(--accent-color);
+  color: #fff;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* App Header */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-profile img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-color);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.user-username {
+  font-size: 11px;
+  color: var(--text-sub);
+}
+
+.user-balance {
+  background: rgba(46, 213, 115, 0.15);
+  border: 1px solid var(--primary-glow);
+  padding: 6px 12px;
+  border-radius: 20px;
+  color: var(--primary-glow);
+  font-weight: bold;
+  font-size: 15px;
+}
+
+/* Page Navigation */
+.main-content {
+  padding: 15px;
+}
+
+.page-section {
+  display: none;
+}
+
+.page-section.active {
+  display: block;
+}
+
+/* Winner Banner */
+.winner-card {
+  background: linear-gradient(135deg, #1e272e, #2f3542);
+  border: 1px solid var(--gold-color);
+  border-radius: 12px;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.winner-badge {
+  color: var(--gold-color);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.winner-name {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* Tournament Card */
+.tournament-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 15px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 15px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.match-time {
+  font-size: 12px;
+  color: var(--accent-color);
+  background: rgba(255, 71, 87, 0.1);
+  padding: 4px 8px;
+  border-radius: 5px;
+}
+
+.prize-pool-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.prize-item {
+  background: #11141e;
+  padding: 8px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.prize-rank {
+  display: block;
+  font-size: 11px;
+  color: var(--text-sub);
+}
+
+.prize-val {
+  font-weight: bold;
+  color: var(--gold-color);
+}
+
+.entry-fee-box {
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.slots-progress {
+  margin-bottom: 15px;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 5px;
+  color: var(--text-sub);
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--primary-glow);
+  transition: width 0.3s ease;
+}
+
+/* Buttons */
+.btn-primary-glow {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background: linear-gradient(90deg, #ff4757, #ff6b81);
+  color: #fff;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+}
+
+.btn-secondary {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background: var(--border-color);
+  color: var(--text-sub);
+  font-weight: bold;
+  border-radius: 8px;
+}
+
+.btn-secondary:not(:disabled) {
+  background: var(--primary-glow);
+  color: #000;
+  cursor: pointer;
+}
+
+/* Slots List */
+.joined-players-container {
+  background: var(--card-bg);
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.slot-item {
+  background: #11141e;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.slot-num {
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+.slot-name {
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Room Credentials */
+.room-box {
+  background: rgba(46, 213, 115, 0.1);
+  border: 1px dashed var(--primary-glow);
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.cred-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-size: 13px;
+}
+
+/* Wallet & Deposit Cards */
+.wallet-action-card, .profile-card {
+  background: var(--card-bg);
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 15px;
+}
+
+.total-bal-display {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.gaming-input {
+  width: 100%;
+  padding: 10px;
+  background: #11141e;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.limit-note {
+  font-size: 11px;
+  color: var(--text-sub);
+  margin-bottom: 10px;
+}
+
+.deposit-methods {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.dep-tab-btn {
+  flex: 1;
+  padding: 8px;
+  background: #11141e;
+  border: 1px solid var(--border-color);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.dep-tab-btn.active {
+  border-color: var(--accent-color);
+  background: rgba(255, 71, 87, 0.1);
+}
+
+.dep-tab-content {
+  display: none;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.dep-tab-content.active {
+  display: block;
+}
+
+.bkash-pay-link {
+  display: inline-block;
+  margin-top: 8px;
+  color: #e2136e;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.copy-number-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #11141e;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 5px;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: var(--nav-bg);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.nav-item {
+  background: none;
+  border: none;
+  color: var(--text-sub);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 11px;
+  gap: 4px;
+}
+
+.nav-item.active {
+  color: var(--accent-color);
+}
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.modal-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 350px;
+  padding: 20px;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px; right: 15px;
+  background: none;
+  border: none;
+  color: var(--text-sub);
+  font-size: 20px;
+}
+
+.wizard-step {
+  display: none;
+}
+
+.wizard-step.active {
+  display: block;
+}
+
+.hidden {
+  display: none !important;
+  }

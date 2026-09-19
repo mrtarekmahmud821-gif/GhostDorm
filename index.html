@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Free Fire Esports Tournament</title>
   
+  <!-- External Stylesheets -->
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -19,7 +20,7 @@
 </head>
 <body>
 
-  <!-- Header -->
+  <!-- App Header -->
   <header class="app-header">
     <div class="user-profile">
       <img id="header-user-avatar" src="https://via.placeholder.com/80" alt="Avatar">
@@ -55,7 +56,6 @@
         
         <!-- 1. Lone Wolf Solo 1V1 -->
         <div class="category-card" onclick="openCategoryMatches('lone_wolf_1v1')">
-          <!-- Replace image link below with your own URL -->
           <img src="https://via.placeholder.com/400x150/161b26/ffffff?text=Lone+Wolf+1v1" alt="Lone Wolf 1v1" class="banner-img">
           <div class="card-overlay">
             <div>
@@ -148,7 +148,7 @@
       </div>
     </section>
 
-    <!-- PAGE 3: WALLET PAGE (Replaces Earn Page) -->
+    <!-- PAGE 3: WALLET PAGE -->
     <section id="page-wallet" class="page-section">
       <!-- Balance Header Box -->
       <div class="wallet-action-card">
@@ -159,14 +159,14 @@
       </div>
 
       <!-- Wallet Nav Tabs -->
-      <div class="wallet-nav-tabs">
-        <button class="wallet-tab-btn active" onclick="switchWalletTab('deposit', this)">
+      <div class="wallet-tabs">
+        <button class="wallet-tab-btn active" onclick="switchWalletTab('deposit', event)">
           <i class="fa-solid fa-arrow-down-to-line"></i> Deposit
         </button>
-        <button class="wallet-tab-btn" onclick="switchWalletTab('withdraw', this)">
+        <button class="wallet-tab-btn" onclick="switchWalletTab('withdraw', event)">
           <i class="fa-solid fa-arrow-up-from-line"></i> Withdraw
         </button>
-        <button class="wallet-tab-btn" onclick="switchWalletTab('history', this)">
+        <button class="wallet-tab-btn" onclick="switchWalletTab('history', event)">
           <i class="fa-solid fa-clock-rotate-left"></i> History
         </button>
       </div>
@@ -230,7 +230,7 @@
         <img id="profile-user-avatar" src="https://via.placeholder.com/80" alt="Profile Picture">
         <h2 id="profile-user-name">Player Name</h2>
         <span id="profile-user-id" class="user-username">@username</span>
-        <div class="profile-balance-badge">
+        <div class="profile-balance-badge" style="margin-top: 8px;">
           <span>Account Balance: </span>
           <strong>৳ <span id="profile-balance-display">0.00</span></strong>
         </div>
@@ -239,14 +239,14 @@
       <!-- User Stats Overview -->
       <div class="profile-card">
         <h3>Account Overview</h3>
-        <div class="profile-stats-grid">
-          <div class="stat-box">
-            <span id="stat-played" class="stat-val">0</span>
-            <span class="stat-lbl">Matches Played</span>
+        <div class="profile-stats-grid" style="display: flex; gap: 10px; margin-top: 10px;">
+          <div class="stat-box" style="flex: 1; background: #11141e; padding: 12px; border-radius: 8px; text-align: center;">
+            <span id="stat-played" class="stat-val" style="font-size: 18px; font-weight: bold; color: var(--gold-color);">0</span>
+            <span class="stat-lbl" style="display: block; font-size: 11px; color: var(--text-sub);">Matches Played</span>
           </div>
-          <div class="stat-box">
-            <span id="stat-wins" class="stat-val">0</span>
-            <span class="stat-lbl">Total Wins</span>
+          <div class="stat-box" style="flex: 1; background: #11141e; padding: 12px; border-radius: 8px; text-align: center;">
+            <span id="stat-wins" class="stat-val" style="font-size: 18px; font-weight: bold; color: var(--primary-glow);">0</span>
+            <span class="stat-lbl" style="display: block; font-size: 11px; color: var(--text-sub);">Total Wins</span>
           </div>
         </div>
       </div>
@@ -265,7 +265,7 @@
         <p>Please enter your exact Free Fire In-Game credentials:</p>
         <div class="form-group">
           <input type="text" id="join-game-name" class="gaming-input" placeholder="In-Game Name (IGN)">
-          <input type="text" id="join-game-uid" class="gaming-input" placeholder="In-Game UID (e.g. 12345678)">
+          <input type="text" id="join-game-uid" class="gaming-input" placeholder="In-Game UID (e.g. 12345678)" style="margin-top: 8px;">
         </div>
         <button class="btn-primary-glow" onclick="goToWizardStep(2)">Next Step</button>
       </div>
@@ -303,6 +303,7 @@
     </button>
   </nav>
 
-  <script src="app.js"></script>
+  <!-- Module Script Import -->
+  <script type="module" src="app.js"></script>
 </body>
 </html>

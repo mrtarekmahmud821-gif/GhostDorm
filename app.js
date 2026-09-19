@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 import { 
-  getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, arrayUnion 
+  getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, arrayUnion, collection 
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 // Firebase Configuration
@@ -76,8 +76,11 @@ let currentUser = {
 let userBalance = 0;
 let joinedPlayersList = [];
 let isUserJoined = false;
+let currentSelectedMode = "lone_wolf_solo";
+let tempStepData = { ff_name: "", ff_uid: "" };
+let matchUnsubscribe = null;
 
-// Initialize Telegram WebApp Data
+// Initialize Telegram WebApp Data & UI
 document.addEventListener("DOMContentLoaded", () => {
   const tg = window.Telegram?.WebApp;
   if (tg) {
@@ -100,7 +103,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Language Setup
   const savedLang = localStorage.getItem("app_lang");
   if (!savedLang) {
-    document.getElementById("lang-selector-box").classList.remove("hidden");
+    const langBox = document.getElementById("lang-selector-box");
+    if (langBox) langBox.classList.remove("hidden");
   } else {
     applyLanguage(savedLang);
     hideLoadingScreen();
@@ -108,15 +112,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Realtime Firebase Listeners
   initUserAccount();
-  listenTournamentMatch();
+  listenLiveMatches();
 });
 
-// App Language Selection
+// Language Functions
 window.selectAppLanguage = function(lang) {
   localStorage.setItem("app_lang", lang);
   applyLanguage(lang);
   hideLoadingScreen();
-  document.getElementById("app-lang-select").value = lang;
+  const selectEl = document.getElementById("app-lang-select");
+  if (selectEl) selectEl.value = lang;
 };
 
 function applyLanguage(lang) {
@@ -128,10 +133,11 @@ function applyLanguage(lang) {
 }
 
 function hideLoadingScreen() {
-  document.getElementById("loading-screen").classList.add("hidden");
+  const loader = document.getElementById("loading-screen");
+  if (loader) loader.classList.add("hidden");
 }
 
-// Global Tab Navigation
+// Navigation Functions
 window.switchTab = function(pageId, btnEl) {
   document.querySelectorAll(".page-section").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
@@ -139,17 +145,53 @@ window.switchTab = function(pageId, btnEl) {
   btnEl.classList.add("active");
 };
 
-// Deposit Sub-Tab Navigation
 window.switchDepTab = function(type) {
   document.querySelectorAll(".dep-tab-btn").forEach(b => b.classList.remove("active"));
   document.querySelectorAll(".dep-tab-content").forEach(c => c.classList.remove("active"));
   if (type === 'bkash') {
-    event.target.classList.add("active");
+    if (event && event.target) event.target.classList.add("active");
     document.getElementById("dep-bkash-box").classList.add("active");
   } else {
-    event.target.classList.add("active");
+    if (event && event.target) event.target.classList.add("active");
     document.getElementById("dep-nagad-box").classList.add("active");
   }
+};
+
+window.copyToClipboard = function(text) {
+  navigator.clipboard.writeText(text);
+  alert("কপি হয়েছে: " + text);
+};
+
+// Match Category Open & Close Handlers
+window.openMatchCategory = function(modeKey) {
+  currentSelectedMode = modeKey;
+  const grid = document.querySelector(".match-categories-grid");
+  if (grid) grid.classList.add("hidden");
+
+  const detailBox = document.getElementById("tournament-detail-box");
+  if (detailBox) detailBox.classList.remove("hidden");
+
+  const titles = {
+    'lone_wolf_solo': 'Lone Wolf Solo 1V1',
+    'lone_wolf_duo': 'Lone Wolf Duo 2V2',
+    'clash_squad': 'Clash Squad 4V4',
+    'br_solo': 'Battle Royale Solo',
+    'br_duo': 'Battle Royale Duo',
+    'br_squad': 'Battle Royale Squad'
+  };
+
+  const titleEl = document.getElementById("selected-match-title");
+  if (titleEl) titleEl.innerText = titles[modeKey] || 'Match Details';
+
+  listenMatchDetails(modeKey);
+};
+
+window.closeCategoryDetail = function() {
+  const detailBox = document.getElementById("tournament-detail-box");
+  if (detailBox) detailBox.classList.add("hidden");
+
+  const grid = document.querySelector(".match-categories-grid");
+  if (grid) grid.classList.remove("hidden");
 };
 
 // --- FIREBASE FIRESTORE LISTENERS ---
@@ -166,53 +208,109 @@ function initUserAccount() {
       });
       userBalance = 0;
     }
-    document.getElementById("balance-amount").innerText = userBalance.toFixed(2);
-    document.getElementById("profile-balance").innerText = userBalance.toFixed(2);
+    const balAmt = document.getElementById("balance-amount");
+    if (balAmt) balAmt.innerText = userBalance.toFixed(2);
+
+    const profBal = document.getElementById("profile-balance");
+    if (profBal) profBal.innerText = userBalance.toFixed(2);
+
     validateWithdrawBtn();
   });
 }
 
-function listenTournamentMatch() {
-  const matchRef = doc(db, "tournaments", "daily_match");
-  onSnapshot(matchRef, (snap) => {
-    if (!snap.exists()) return;
+function listenLiveMatches() {
+  onSnapshot(collection(db, "live_matches"), (snapshot) => {
+    const container = document.getElementById("live-matches-container");
+    if (!container) return;
+    container.innerHTML = "";
+    if (snapshot.empty) {
+      container.innerHTML = "<p style='color: var(--text-sub); text-align: center; margin-top: 20px;'>বর্তমানে কোনো লাইভ ম্যাচ নেই</p>";
+      return;
+    }
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const card = document.createElement("div");
+      card.className = "live-match-card";
+      card.innerHTML = `
+        <div class="live-status-badge"><span class="pulse-dot"></span> LIVE</div>
+        <h4>${data.title || "Free Fire Match"}</h4>
+        <p class="live-mode-text">ম্যাপ: ${data.map || "Bermuda"} | সময়: ${data.time || "Live"}</p>
+        <div class="credentials-container">
+          <div class="cred-item">
+            <span>Room ID:</span> <strong>${data.room_id || "N/A"}</strong>
+            <button onclick="copyToClipboard('${data.room_id || ""}')"><i class="fa-regular fa-copy"></i></button>
+          </div>
+          <div class="cred-item">
+            <span>Password:</span> <strong>${data.room_pass || "N/A"}</strong>
+            <button onclick="copyToClipboard('${data.room_pass || ""}')"><i class="fa-regular fa-copy"></i></button>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  });
+}
+
+function listenMatchDetails(mode) {
+  if (matchUnsubscribe) matchUnsubscribe();
+
+  const matchRef = doc(db, "tournaments", mode);
+  matchUnsubscribe = onSnapshot(matchRef, (snap) => {
+    if (!snap.exists()) {
+      joinedPlayersList = [];
+      updateSlotUI(0);
+      renderSlotsGrid();
+      resetJoinButton();
+      return;
+    }
     const data = snap.data();
-    
+
     // Update Slots
     joinedPlayersList = data.players || [];
     const count = joinedPlayersList.length;
-    document.getElementById("slot-count-text").innerText = `${count} / 48`;
-    const pct = (count / 48) * 100;
-    document.getElementById("progress-bar-fill").style.width = `${pct}%`;
+    updateSlotUI(count);
 
-    // Render Slots List
+    // Render Slots Grid List
     renderSlotsGrid();
 
     // Check if current user is in match
     isUserJoined = joinedPlayersList.some(p => p.id === currentUser.id);
     const joinBtn = document.getElementById("btn-join-match");
-    if (isUserJoined) {
-      joinBtn.disabled = true;
-      joinBtn.innerText = "Joined";
-    } else if (count >= 48) {
-      joinBtn.disabled = true;
-      joinBtn.innerText = "Team Full";
-    }
-
-    // Room Credentials Display
-    const roomBox = document.getElementById("room-credentials-box");
-    if (isUserJoined && data.room_id && data.room_pass) {
-      roomBox.classList.remove("hidden");
-      document.getElementById("room-id-val").innerText = data.room_id;
-      document.getElementById("room-pass-val").innerText = data.room_pass;
-    } else {
-      roomBox.classList.add("hidden");
+    if (joinBtn) {
+      if (isUserJoined) {
+        joinBtn.disabled = true;
+        joinBtn.innerText = "Joined";
+      } else if (count >= 48) {
+        joinBtn.disabled = true;
+        joinBtn.innerText = "Team Full";
+      } else {
+        joinBtn.disabled = false;
+        joinBtn.innerText = "জয়েন করুন (৳১)";
+      }
     }
   });
 }
 
+function updateSlotUI(count) {
+  const slotText = document.getElementById("slot-count-text");
+  if (slotText) slotText.innerText = `${count} / 48`;
+
+  const pct = (count / 48) * 100;
+  const barFill = document.getElementById("progress-bar-fill");
+  if (barFill) barFill.style.width = `${pct}%`;
+}
+
+function resetJoinButton() {
+  const joinBtn = document.getElementById("btn-join-match");
+  if (joinBtn) {
+    joinBtn.disabled = false;
+    joinBtn.innerText = "জয়েন করুন (৳১)";
+  }
+}
+
 function renderSlotsGrid() {
   const container = document.getElementById("players-slot-list");
+  if (!container) return;
   container.innerHTML = "";
   for (let i = 1; i <= 48; i++) {
     const pData = joinedPlayersList[i - 1];
@@ -227,12 +325,11 @@ function renderSlotsGrid() {
 }
 
 // --- MULTI-STEP JOIN TOURNAMENT & AD INTEGRATION ---
-let tempStepData = { ff_name: "", ff_uid: "" };
-
 window.openJoinWizard = function() {
   if (userBalance < 1) {
     alert("পর্যাপ্ত ব্যালেন্স নেই! দয়া করে ডিপোজিট করুন।");
-    switchTab('page-profile', document.querySelectorAll(".nav-item")[2]);
+    const profileNav = document.querySelectorAll(".nav-item")[3] || document.querySelectorAll(".nav-item")[2];
+    switchTab('page-profile', profileNav);
     return;
   }
   document.getElementById("join-modal").classList.remove("hidden");
@@ -245,7 +342,8 @@ window.closeJoinWizard = function() {
 
 function showWizardStep(stepNum) {
   document.querySelectorAll(".wizard-step").forEach(s => s.classList.remove("active"));
-  document.getElementById(`wizard-step-${stepNum}`).classList.add("active");
+  const currentStep = document.getElementById(`wizard-step-${stepNum}`);
+  if (currentStep) currentStep.classList.add("active");
 }
 
 // Step 1: In-game Name -> Adexium Ad (Fallback: Monetag)
@@ -274,7 +372,7 @@ window.submitStep1 = function() {
   }
 };
 
-// Step 2: Player UID -> Adexium (Fallback: Tgads -> Gigapub)
+// Step 2: Player UID -> Gigapub
 window.submitStep2 = function() {
   const val = document.getElementById("input-ff-uid").value.trim();
   if (!val) return alert("Player UID দিতে হবে!");
@@ -308,7 +406,8 @@ window.submitStep3Final = function() {
 // Firestore Transaction for Safe Registration
 async function processTournamentRegistration() {
   const userRef = doc(db, "users", currentUser.id);
-  const matchRef = doc(db, "tournaments", "daily_match");
+  const matchMode = currentSelectedMode || "lone_wolf_solo";
+  const matchRef = doc(db, "tournaments", matchMode);
 
   try {
     await runTransaction(db, async (transaction) => {
@@ -316,23 +415,28 @@ async function processTournamentRegistration() {
       const mSnap = await transaction.get(matchRef);
 
       if (!uSnap.exists()) throw "User record missing!";
-      if (!mSnap.exists()) throw "Match data missing!";
 
       const curBal = uSnap.data().balance || 0;
       if (curBal < 1) throw "Insufficient Balance!";
 
-      const players = mSnap.data().players || [];
+      let players = [];
+      if (mSnap.exists()) {
+        players = mSnap.data().players || [];
+      } else {
+        transaction.set(matchRef, { players: [] });
+      }
+
       if (players.length >= 48) throw "Match Full!";
 
       // Deduct Balance ৳1 & Add Player to Array
       transaction.update(userRef, { balance: curBal - 1 });
-      transaction.update(matchRef, {
+      transaction.set(matchRef, {
         players: arrayUnion({
           id: currentUser.id,
           ff_name: tempStepData.ff_name,
           ff_uid: tempStepData.ff_uid
         })
-      });
+      }, { merge: true });
     });
 
     alert("সফলভাবে টুর্নামেন্টে জয়েন সম্পন্ন হয়েছে!");
@@ -344,9 +448,13 @@ async function processTournamentRegistration() {
 
 // --- WITHDRAW & DEPOSIT LOGIC ---
 window.validateWithdrawBtn = function() {
-  const method = document.getElementById("withdraw-method").value;
-  const amount = parseFloat(document.getElementById("withdraw-amount").value) || 0;
+  const methodEl = document.getElementById("withdraw-method");
+  const amtEl = document.getElementById("withdraw-amount");
   const btn = document.getElementById("btn-withdraw-submit");
+  if (!methodEl || !amtEl || !btn) return;
+
+  const method = methodEl.value;
+  const amount = parseFloat(amtEl.value) || 0;
 
   let min = (method === 'nagad') ? 100 : 20;
   btn.disabled = !(amount >= min && userBalance >= amount);

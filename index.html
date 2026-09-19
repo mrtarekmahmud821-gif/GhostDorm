@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -19,298 +19,290 @@
 </head>
 <body>
 
-  <!-- Loading Screen -->
-  <div id="loading-screen" class="loading-screen">
-    <div class="loader-content">
-      <div class="gaming-spinner"></div>
-      <h2 id="loading-title">ESPORTS TOURNAMENT</h2>
-      <div id="lang-selector-box" class="lang-selector-box hidden">
-        <p>Select Language / ভাষা নির্বাচন করুন</p>
-        <div class="lang-btn-group">
-          <button class="lang-btn" onclick="selectAppLanguage('bn')">বাংলা</button>
-          <button class="lang-btn" onclick="selectAppLanguage('en')">English</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Header -->
   <header class="app-header">
     <div class="user-profile">
-      <img id="user-avatar" src="https://via.placeholder.com/45" alt="Profile">
+      <img id="header-user-avatar" src="https://via.placeholder.com/80" alt="Avatar">
       <div class="user-details">
-        <span id="user-name" class="user-name">Loading...</span>
-        <span id="user-username" class="user-username">@username</span>
+        <span id="header-user-name" class="user-name">Player Name</span>
+        <span id="header-user-id" class="user-username">@username</span>
       </div>
     </div>
     <div class="user-balance">
-      <span class="currency-symbol">৳</span>
-      <span id="balance-amount">0.00</span>
+      <i class="fa-solid fa-wallet"></i>
+      <span>৳ <span id="header-balance">0.00</span></span>
     </div>
   </header>
 
-  <!-- Main View -->
+  <!-- Main View Content -->
   <main class="main-content">
 
-    <!-- 1. HOME PAGE (6 MATCH CATEGORIES) -->
+    <!-- PAGE 1: HOME PAGE (CATEGORIES & MATCHES) -->
     <section id="page-home" class="page-section active">
+      <!-- Winner Banner -->
       <div class="winner-card">
-        <div class="winner-badge"><i class="fa-solid fa-trophy"></i> <span data-i18n="last_winner">সর্বশেষ উইনার</span></div>
-        <div id="winner-team-name" class="winner-name">Team Alpha (30৳ Winner)</div>
+        <div class="winner-badge">
+          <i class="fa-solid fa-trophy"></i>
+          <span>Last Winner</span>
+        </div>
+        <div id="recent-winner" class="winner-name">Team Alpha (Prize: ৳500)</div>
       </div>
 
-      <h3 class="section-title">টুর্নামেন্ট ক্যাটাগরি</h3>
+      <h3 class="section-title"><i class="fa-solid fa-gamepad"></i> Select Tournament Category</h3>
       
-      <!-- 6 Match Cards Grid -->
-      <div class="match-categories-grid">
+      <!-- 6 Category Cards Grid -->
+      <div id="category-list-view" class="match-categories-grid">
         
-        <!-- Mode 1: Lone Wolf Solo 1V1 -->
-        <div class="category-card" onclick="openMatchCategory('lone_wolf_solo')">
-          <img src="https://t.me/dogscoin_channel/413" alt="Lone Wolf Solo" class="banner-img">
+        <!-- 1. Lone Wolf Solo 1V1 -->
+        <div class="category-card" onclick="openCategoryMatches('lone_wolf_1v1')">
+          <!-- Replace image link below with your own URL -->
+          <img src="https://via.placeholder.com/400x150/161b26/ffffff?text=Lone+Wolf+1v1" alt="Lone Wolf 1v1" class="banner-img">
           <div class="card-overlay">
-            <h4>Lone Wolf Solo 1V1</h4>
-            <span class="mode-badge">1v1 Tournament</span>
+            <div>
+              <h4>Lone Wolf Solo (1V1)</h4>
+              <span class="mode-badge">Max 2 Players</span>
+            </div>
+            <i class="fa-solid fa-chevron-right text-sub"></i>
           </div>
         </div>
 
-        <!-- Mode 2: Lone Wolf Duo 2V2 -->
-        <div class="category-card" onclick="openMatchCategory('lone_wolf_duo')">
-          <img src="https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/main/banners/lone-wolf-duo.png" alt="Lone Wolf Duo" class="banner-img">
+        <!-- 2. Lone Wolf Duo 2V2 -->
+        <div class="category-card" onclick="openCategoryMatches('lone_wolf_2v2')">
+          <img src="https://via.placeholder.com/400x150/161b26/ffffff?text=Lone+Wolf+2v2" alt="Lone Wolf 2v2" class="banner-img">
           <div class="card-overlay">
-            <h4>Lone Wolf Duo 2V2</h4>
-            <span class="mode-badge">2v2 Team</span>
+            <div>
+              <h4>Lone Wolf Duo (2V2)</h4>
+              <span class="mode-badge">Max 4 Players (2v2)</span>
+            </div>
+            <i class="fa-solid fa-chevron-right text-sub"></i>
           </div>
         </div>
 
-        <!-- Mode 3: Clash Squad 4V4 -->
-        <div class="category-card" onclick="openMatchCategory('clash_squad')">
-          <img src="https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/main/banners/clash-squad.png" alt="Clash Squad" class="banner-img">
+        <!-- 3. Clash Squad 4V4 -->
+        <div class="category-card" onclick="openCategoryMatches('clash_squad_4v4')">
+          <img src="https://via.placeholder.com/400x150/161b26/ffffff?text=Clash+Squad+4v4" alt="Clash Squad 4v4" class="banner-img">
           <div class="card-overlay">
-            <h4>Clash Squad 4V4</h4>
-            <span class="mode-badge">4v4 Squad</span>
+            <div>
+              <h4>Clash Squad (4V4)</h4>
+              <span class="mode-badge">Max 8 Players (4v4)</span>
+            </div>
+            <i class="fa-solid fa-chevron-right text-sub"></i>
           </div>
         </div>
 
-        <!-- Mode 4: BR Solo -->
-        <div class="category-card" onclick="openMatchCategory('br_solo')">
-          <img src="https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/main/banners/br-solo.png" alt="Battle Royale Solo" class="banner-img">
+        <!-- 4. Battle Royale Solo -->
+        <div class="category-card" onclick="openCategoryMatches('br_solo')">
+          <img src="https://via.placeholder.com/400x150/161b26/ffffff?text=BR+Solo" alt="BR Solo" class="banner-img">
           <div class="card-overlay">
-            <h4>Battle Royale Solo</h4>
-            <span class="mode-badge">48 Players Solo</span>
+            <div>
+              <h4>Battle Royale Solo</h4>
+              <span class="mode-badge">Max 48 Players</span>
+            </div>
+            <i class="fa-solid fa-chevron-right text-sub"></i>
           </div>
         </div>
 
-        <!-- Mode 5: BR Duo -->
-        <div class="category-card" onclick="openMatchCategory('br_duo')">
-          <img src="https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/main/banners/br-duo.png" alt="Battle Royale Duo" class="banner-img">
+        <!-- 5. Battle Royale Duo -->
+        <div class="category-card" onclick="openCategoryMatches('br_duo')">
+          <img src="https://via.placeholder.com/400x150/161b26/ffffff?text=BR+Duo" alt="BR Duo" class="banner-img">
           <div class="card-overlay">
-            <h4>Battle Royale Duo</h4>
-            <span class="mode-badge">Duo Team</span>
+            <div>
+              <h4>Battle Royale Duo</h4>
+              <span class="mode-badge">Max 48 Players (Duo)</span>
+            </div>
+            <i class="fa-solid fa-chevron-right text-sub"></i>
           </div>
         </div>
 
-        <!-- Mode 6: BR Squad -->
-        <div class="category-card" onclick="openMatchCategory('br_squad')">
-          <img src="https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/main/banners/br-squad.png" alt="Battle Royale Squad" class="banner-img">
+        <!-- 6. Battle Royale Squad -->
+        <div class="category-card" onclick="openCategoryMatches('br_squad')">
+          <img src="https://via.placeholder.com/400x150/161b26/ffffff?text=BR+Squad" alt="BR Squad" class="banner-img">
           <div class="card-overlay">
-            <h4>Battle Royale Squad</h4>
-            <span class="mode-badge">4v4 Full Squad</span>
+            <div>
+              <h4>Battle Royale Squad</h4>
+              <span class="mode-badge">Max 48 Players (Squad)</span>
+            </div>
+            <i class="fa-solid fa-chevron-right text-sub"></i>
           </div>
         </div>
 
       </div>
 
-      <!-- Active Tournament Detail Box (Opened on Category Click) -->
-      <div id="tournament-detail-box" class="tournament-card hidden">
-        <button class="btn-back" onclick="closeCategoryDetail()"><i class="fa-solid fa-arrow-left"></i> ব্যাক</button>
-        <div class="card-header">
-          <h3 id="selected-match-title">দৈনিক ফ্রি ফায়ার টুর্নামেন্ট</h3>
-          <span class="match-time"><i class="fa-regular fa-clock"></i> 10:00 PM</span>
-        </div>
-        <div class="prize-pool-grid">
-          <div class="prize-item"><span class="prize-rank">1st</span><span class="prize-val">৳30</span></div>
-          <div class="prize-item"><span class="prize-rank">2nd</span><span class="prize-val">৳15</span></div>
-          <div class="prize-item"><span class="prize-rank">3rd</span><span class="prize-val">৳10</span></div>
-        </div>
-        <div class="entry-fee-box"><span>এন্ট্রি ফি:</span> <strong>৳1</strong></div>
-
-        <div class="slots-progress">
-          <div class="progress-info">
-            <span>অংশগ্রহণকারী:</span>
-            <span id="slot-count-text">0 / 48</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
-          </div>
-        </div>
-
-        <button id="btn-join-match" class="btn-primary-glow" onclick="openJoinWizard()">জয়েন করুন (৳১)</button>
-
-        <div class="joined-players-container" style="margin-top:20px;">
-          <h4>প্লেয়ার তালিকা (৪৮ জন)</h4>
-          <div id="players-slot-list" class="slots-grid"></div>
+      <!-- Active Matches Container View (Dynamic) -->
+      <div id="matches-list-view" class="hidden">
+        <button class="btn-back" onclick="backToCategories()">
+          <i class="fa-solid fa-arrow-left"></i> Back to Categories
+        </button>
+        <h3 id="selected-category-title" class="section-title">Active Matches</h3>
+        <div id="active-matches-container">
+          <!-- Populated dynamically via app.js -->
         </div>
       </div>
     </section>
 
-    <!-- 2. LIVE PAGE -->
+    <!-- PAGE 2: LIVE PAGE -->
     <section id="page-live" class="page-section">
-      <h3 class="section-title"><i class="fa-solid fa-tower-broadcast" style="color:var(--accent-color)"></i> চলমান লাইভ ম্যাচসমূহ</h3>
+      <h3 class="section-title"><i class="fa-solid fa-tower-broadcast"></i> Live Matches</h3>
       <div id="live-matches-container">
-        <!-- Live matches will load dynamically -->
+        <!-- Room ID & Password details rendered here -->
       </div>
     </section>
 
-    <!-- 3. EARN PAGE -->
-    <section id="page-earn" class="page-section">
-      <div class="coming-soon-box">
-        <i class="fa-solid fa-rocket coming-icon"></i>
-        <h2>Earn Section</h2>
-        <p data-i18n="coming_soon">কামিং সুন! নতুন টাস্ক এবং আর্নিং অপশন শীঘ্রই চালু করা হবে।</p>
-      </div>
-    </section>
-
-    <!-- 4. PROFILE PAGE -->
-    <section id="page-profile" class="page-section">
-      <div class="profile-card">
-        <h3 data-i18n="my_wallet">মাই ওয়ালেট</h3>
+    <!-- PAGE 3: WALLET PAGE (Replaces Earn Page) -->
+    <section id="page-wallet" class="page-section">
+      <!-- Balance Header Box -->
+      <div class="wallet-action-card">
         <div class="total-bal-display">
-          <span data-i18n="current_balance">বর্তমান ব্যালেন্স</span>
-          <h1>৳ <span id="profile-balance">0.00</span></h1>
+          <span>Current Account Balance</span>
+          <h1>৳ <span id="wallet-balance-display">0.00</span></h1>
         </div>
       </div>
 
-      <!-- Withdraw Section -->
-      <div class="wallet-action-card">
-        <h4 data-i18n="withdraw">টাকা উত্তোলন (Withdraw)</h4>
-        <p class="limit-note">Recharge & bKash Min: ৳20 | Nagad Min: ৳100</p>
-        <div class="form-group">
-          <select id="withdraw-method" class="gaming-input" onchange="validateWithdrawBtn()">
-            <option value="recharge">Mobile Recharge (Min ৳20)</option>
-            <option value="bkash">bKash (Min ৳20)</option>
-            <option value="nagad">Nagad (Min ৳100)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <input type="number" id="withdraw-amount" class="gaming-input" placeholder="পরিমাণ (৳)" oninput="validateWithdrawBtn()">
-        </div>
-        <div class="form-group">
-          <input type="text" id="withdraw-account" class="gaming-input" placeholder="একাউন্ট / মোবাইল নম্বর">
-        </div>
-        <button id="btn-withdraw-submit" class="btn-secondary" disabled onclick="handleWithdrawSubmit()" data-i18n="submit_withdraw">উত্তোলন রিকুয়েস্ট দিন</button>
+      <!-- Wallet Nav Tabs -->
+      <div class="wallet-nav-tabs">
+        <button class="wallet-tab-btn active" onclick="switchWalletTab('deposit', this)">
+          <i class="fa-solid fa-arrow-down-to-line"></i> Deposit
+        </button>
+        <button class="wallet-tab-btn" onclick="switchWalletTab('withdraw', this)">
+          <i class="fa-solid fa-arrow-up-from-line"></i> Withdraw
+        </button>
+        <button class="wallet-tab-btn" onclick="switchWalletTab('history', this)">
+          <i class="fa-solid fa-clock-rotate-left"></i> History
+        </button>
+      </div>
 
-        <div class="history-box">
-          <h5 data-i18n="withdraw_history">উত্তোলন হিস্টোরি</h5>
-          <ul id="withdraw-history-list" class="history-list"></ul>
+      <!-- Tab 1: Deposit (Default Open) -->
+      <div id="wallet-tab-deposit" class="wallet-tab-content active">
+        <div class="wallet-action-card">
+          <h4>Deposit Money</h4>
+          <div class="deposit-methods">
+            <button class="dep-tab-btn active" onclick="selectDepMethod('bkash', this)">bKash</button>
+            <button class="dep-tab-btn" onclick="selectDepMethod('nagad', this)">Nagad</button>
+          </div>
+
+          <div class="dep-tab-content active">
+            <p class="limit-note">Send Money to the Personal Number below:</p>
+            <div class="copy-number-box">
+              <strong id="dep-phone-number">01700000000</strong>
+              <button onclick="copyNumber('dep-phone-number')"><i class="fa-solid fa-copy"></i> Copy</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 15px;">
+            <input type="number" id="dep-amount" class="gaming-input" placeholder="Enter Deposit Amount (Min ৳50)">
+            <input type="text" id="dep-trxid" class="gaming-input" placeholder="Enter Transaction ID (TrxID)">
+            <button class="btn-primary-glow" onclick="submitDeposit()">Submit Deposit Request</button>
+          </div>
         </div>
       </div>
 
-      <!-- Deposit Section -->
-      <div class="wallet-action-card">
-        <h4 data-i18n="deposit">ডিপোজিট (Deposit)</h4>
-        <p class="limit-note">bKash Min: ৳10 | Nagad Min: ৳100</p>
-        
-        <div class="deposit-methods">
-          <button class="dep-tab-btn active" onclick="switchDepTab('bkash')">bKash Payment</button>
-          <button class="dep-tab-btn" onclick="switchDepTab('nagad')">Nagad Send Money</button>
-        </div>
-
-        <div id="dep-bkash-box" class="dep-tab-content active">
-          <p>বিকাশ এর মাধ্যমে পেমেন্ট করতে নিচের লিংকে ক্লিক করুন:</p>
-          <a href="https://shop.bkash.com/gravity-internet01816640707/paymentlink" target="_blank" class="bkash-pay-link">
-            <i class="fa-solid fa-external-link"></i> bKash Payment Link
-          </a>
-        </div>
-
-        <div id="dep-nagad-box" class="dep-tab-content">
-          <p>আমাদের নগদ পার্সোনাল নাম্বারে Send Money করুন:</p>
-          <div class="copy-number-box">
-            <strong>01323431323</strong>
-            <button onclick="copyToClipboard('01323431323')"><i class="fa-regular fa-copy"></i></button>
-          </div>
-        </div>
-
-        <div class="deposit-form" style="margin-top:15px;">
+      <!-- Tab 2: Withdraw -->
+      <div id="wallet-tab-withdraw" class="wallet-tab-content">
+        <div class="wallet-action-card">
+          <h4>Withdraw Winnings</h4>
           <div class="form-group">
-            <input type="number" id="dep-amount" class="gaming-input" placeholder="ডিপোজিটকৃত পরিমাণ (৳)">
+            <select id="withdraw-method" class="gaming-input">
+              <option value="bkash">bKash Personal</option>
+              <option value="nagad">Nagad Personal</option>
+            </select>
+            <input type="text" id="withdraw-number" class="gaming-input" placeholder="Enter Account Phone Number">
+            <input type="number" id="withdraw-amount" class="gaming-input" placeholder="Enter Amount (Min ৳100)">
+            <p class="limit-note">Withdrawal requests are processed within 1-12 hours.</p>
+            <button class="btn-primary-glow" onclick="submitWithdraw()">Submit Withdrawal Request</button>
           </div>
-          <div class="form-group">
-            <input type="text" id="dep-phone" class="gaming-input" placeholder="যে নম্বর থেকে পেমেন্ট করেছেন">
-          </div>
-          <div class="form-group">
-            <input type="text" id="dep-trxi" class="gaming-input" placeholder="Transaction ID (TrxID)">
-          </div>
-          <button class="btn-primary-glow" onclick="handleDepositSubmit()" data-i18n="submit_deposit">ডিপোজিট রিকুয়েস্ট পাঠান</button>
         </div>
       </div>
 
-      <!-- App Settings -->
-      <div class="wallet-action-card">
-        <h4 data-i18n="settings">সেটিংস</h4>
-        <div class="setting-row">
-          <span data-i18n="change_lang">ভাষা পরিবর্তন:</span>
-          <select id="app-lang-select" class="gaming-input inline-select" onchange="selectAppLanguage(this.value)">
-            <option value="bn">বাংলা</option>
-            <option value="en">English</option>
-          </select>
+      <!-- Tab 3: History -->
+      <div id="wallet-tab-history" class="wallet-tab-content">
+        <div class="wallet-action-card">
+          <h4>Transaction History</h4>
+          <div id="history-list-container" class="history-list">
+            <!-- Dynamically populated transaction history -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 4: PROFILE PAGE -->
+    <section id="page-profile" class="page-section">
+      <div class="profile-card user-profile-header">
+        <img id="profile-user-avatar" src="https://via.placeholder.com/80" alt="Profile Picture">
+        <h2 id="profile-user-name">Player Name</h2>
+        <span id="profile-user-id" class="user-username">@username</span>
+        <div class="profile-balance-badge">
+          <span>Account Balance: </span>
+          <strong>৳ <span id="profile-balance-display">0.00</span></strong>
+        </div>
+      </div>
+
+      <!-- User Stats Overview -->
+      <div class="profile-card">
+        <h3>Account Overview</h3>
+        <div class="profile-stats-grid">
+          <div class="stat-box">
+            <span id="stat-played" class="stat-val">0</span>
+            <span class="stat-lbl">Matches Played</span>
+          </div>
+          <div class="stat-box">
+            <span id="stat-wins" class="stat-val">0</span>
+            <span class="stat-lbl">Total Wins</span>
+          </div>
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- Navigation Bar (4 Tabs) -->
-  <nav class="bottom-nav">
-    <button class="nav-item active" onclick="switchTab('page-home', this)">
-      <i class="fa-solid fa-house"></i>
-      <span data-i18n="nav_home">হোম</span>
-    </button>
-    <button class="nav-item" onclick="switchTab('page-live', this)">
-      <i class="fa-solid fa-headset"></i>
-      <span>লাইভ</span>
-    </button>
-    <button class="nav-item" onclick="switchTab('page-earn', this)">
-      <i class="fa-solid fa-coins"></i>
-      <span data-i18n="nav_earn">আর্ন</span>
-    </button>
-    <button class="nav-item" onclick="switchTab('page-profile', this)">
-      <i class="fa-solid fa-user"></i>
-      <span data-i18n="nav_profile">প্রোফাইল</span>
-    </button>
-  </nav>
-
-  <!-- Multi-step Join Tournament Modal -->
+  <!-- Join Tournament Multi-Step Modal -->
   <div id="join-modal" class="modal-overlay hidden">
     <div class="modal-card">
-      <button class="modal-close" onclick="closeJoinWizard()">&times;</button>
+      <button class="modal-close" onclick="closeJoinModal()">&times;</button>
       
+      <!-- Wizard Step 1: In-Game Details -->
       <div id="wizard-step-1" class="wizard-step active">
-        <h3>ধাপ ১: ইন-গেম নেম</h3>
-        <p>আপনার Free Fire এর হুবহু গেম নেম লিখুন:</p>
+        <h3>Join Tournament</h3>
+        <p>Please enter your exact Free Fire In-Game credentials:</p>
         <div class="form-group">
-          <input type="text" id="input-ff-name" class="gaming-input" placeholder="Free Fire Name">
+          <input type="text" id="join-game-name" class="gaming-input" placeholder="In-Game Name (IGN)">
+          <input type="text" id="join-game-uid" class="gaming-input" placeholder="In-Game UID (e.g. 12345678)">
         </div>
-        <button class="btn-primary-glow" onclick="submitStep1()">Submit & Next</button>
+        <button class="btn-primary-glow" onclick="goToWizardStep(2)">Next Step</button>
       </div>
 
+      <!-- Wizard Step 2: Payment Confirmation -->
       <div id="wizard-step-2" class="wizard-step">
-        <h3>ধাপ ২: প্লেয়ার UID</h3>
-        <p>আপনার Free Fire UID দিন:</p>
-        <div class="form-group">
-          <input type="number" id="input-ff-uid" class="gaming-input" placeholder="Free Fire Player UID">
+        <h3>Confirm Entry</h3>
+        <p>Entry Fee will be deducted from your account balance.</p>
+        <div class="entry-fee-box">
+          <span>Match Entry Fee:</span>
+          <strong class="prize-val">৳ <span id="modal-entry-fee">0</span></strong>
         </div>
-        <button class="btn-primary-glow" onclick="submitStep2()">Submit & Next</button>
+        <button class="btn-secondary" onclick="confirmMatchJoin()">Confirm & Pay</button>
       </div>
-
-      <div id="wizard-step-3" class="wizard-step">
-        <h3>ধাপ ৩: ফাইনাল জয়েন</h3>
-        <p>টিমে স্থান নিশ্চিত করতে নিচে চাপুন। একাউন্ট থেকে ৳১ কাটা হবে।</p>
-        <button class="btn-primary-glow" onclick="submitStep3Final()">Confirm & Join Team</button>
-      </div>
-
     </div>
   </div>
 
-  <script type="module" src="app.js"></script>
+  <!-- Bottom Navigation Bar -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="navigateTo('home', this)">
+      <i class="fa-solid fa-house"></i>
+      <span>Home</span>
+    </button>
+    <button class="nav-item" onclick="navigateTo('live', this)">
+      <i class="fa-solid fa-tower-broadcast"></i>
+      <span>Live</span>
+    </button>
+    <button class="nav-item" onclick="navigateTo('wallet', this)">
+      <i class="fa-solid fa-wallet"></i>
+      <span>Wallet</span>
+    </button>
+    <button class="nav-item" onclick="navigateTo('profile', this)">
+      <i class="fa-solid fa-user"></i>
+      <span>Profile</span>
+    </button>
+  </nav>
+
+  <script src="app.js"></script>
 </body>
 </html>

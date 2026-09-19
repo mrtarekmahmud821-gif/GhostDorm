@@ -3,29 +3,284 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>GhostDorm - Haunted Dorm Style</title>
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: #0a0a12;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      overflow: hidden;
-      font-family: system-ui, sans-serif;
-    }
-    #game-container {
-      width: 100%;
-      max-width: 960px;
-      box-shadow: 0 0 40px rgba(120, 0, 255, 0.3);
-    }
-    canvas { display: block; width: 100% !important; height: auto !important; }
-  </style>
+  <title>Free Fire Esports Tournament</title>
+  
+  <!-- CSS Style -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
+
+  <!-- Ad Networks SDKs -->
+  <!-- Adexium SDK -->
+  <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
+  <!-- Monetag SDK -->
+  <script src="//libtl.com/sdk.js" data-zone="10373507" data-sdk="show_10373507"></script>
+  <!-- Gigapub SDK -->
+  <script src="https://ad.gigapub.tech/script?id=6390"></script>
+  <!-- Adsgram SDK -->
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 </head>
 <body>
-  <div id="game-container"></div>
-  <script src="game.js"></script>
+
+  <!-- Loading & Language Selection Splash Screen -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loader-content">
+      <div class="gaming-spinner"></div>
+      <h2 id="loading-title">ESPORTS TOURNAMENT</h2>
+      <div id="lang-selector-box" class="lang-selector-box hidden">
+        <p>Select Language / ভাষা নির্বাচন করুন</p>
+        <div class="lang-btn-group">
+          <button class="lang-btn" onclick="selectAppLanguage('bn')">বাংলা</button>
+          <button class="lang-btn" onclick="selectAppLanguage('en')">English</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="user-profile">
+      <img id="user-avatar" src="https://via.placeholder.com/45" alt="Profile">
+      <div class="user-details">
+        <span id="user-name" class="user-name">Loading...</span>
+        <span id="user-username" class="user-username">@username</span>
+      </div>
+    </div>
+    <div class="user-balance">
+      <span class="currency-symbol">৳</span>
+      <span id="balance-amount">0.00</span>
+    </div>
+  </header>
+
+  <!-- Main View Containers -->
+  <main class="main-content">
+
+    <!-- HOME PAGE -->
+    <section id="page-home" class="page-section active">
+      <!-- Winner Banner -->
+      <div class="winner-card">
+        <div class="winner-badge"><i class="fa-solid fa-trophy"></i> <span data-i18n="last_winner">সর্বশেষ উইনার</span></div>
+        <div id="winner-team-name" class="winner-name">Team Alpha (30৳ Winner)</div>
+      </div>
+
+      <!-- Tournament Details Card -->
+      <div class="tournament-card">
+        <div class="card-header">
+          <h3 data-i18n="daily_tournament">দৈনিক ফ্রি ফায়ার টুর্নামেন্ট</h3>
+          <span class="match-time"><i class="fa-regular fa-clock"></i> 10:00 PM</span>
+        </div>
+        <div class="prize-pool-grid">
+          <div class="prize-item">
+            <span class="prize-rank">1st</span>
+            <span class="prize-val">৳30</span>
+          </div>
+          <div class="prize-item">
+            <span class="prize-rank">2nd</span>
+            <span class="prize-val">৳15</span>
+          </div>
+          <div class="prize-item">
+            <span class="prize-rank">3rd</span>
+            <span class="prize-val">৳10</span>
+          </div>
+        </div>
+        <div class="entry-fee-box">
+          <span data-i18n="entry_fee">এন্ট্রি ফি:</span> <strong>৳1</strong>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="slots-progress">
+          <div class="progress-info">
+            <span data-i18n="joined_players">অংশগ্রহণকারী:</span>
+            <span id="slot-count-text">0 / 48</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <button id="btn-join-match" class="btn-primary-glow" onclick="openJoinWizard()" data-i18n="join_now">জয়েন করুন (৳১)</button>
+      </div>
+
+      <!-- Private Room Credentials (Only visible to joined players when Live) -->
+      <div id="room-credentials-box" class="room-box hidden">
+        <h4 data-i18n="room_details">রুমে যোগ দেওয়ার তথ্য (লাইভ)</h4>
+        <div class="cred-row">
+          <span>Room ID:</span> <strong id="room-id-val">---</strong>
+        </div>
+        <div class="cred-row">
+          <span>Password:</span> <strong id="room-pass-val">---</strong>
+        </div>
+      </div>
+
+      <!-- Live Player Slots List (1 to 48) -->
+      <div class="joined-players-container">
+        <h4 data-i18n="joined_list_title">প্লেয়ার তালিকা (৪৮ জন)</h4>
+        <div id="players-slot-list" class="slots-grid">
+          <!-- 1 to 48 Slots dynamically generated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- EARN PAGE -->
+    <section id="page-earn" class="page-section">
+      <div class="coming-soon-box">
+        <i class="fa-solid fa-rocket coming-icon"></i>
+        <h2>Earn Section</h2>
+        <p data-i18n="coming_soon">কামিং সুন! নতুন টাস্ক এবং আর্নিং অপশন শীঘ্রই চালু করা হবে।</p>
+      </div>
+    </section>
+
+    <!-- PROFILE PAGE -->
+    <section id="page-profile" class="page-section">
+      <div class="profile-card">
+        <h3 data-i18n="my_wallet">মাই ওয়ালেট</h3>
+        <div class="total-bal-display">
+          <span data-i18n="current_balance">বর্তমান ব্যালেন্স</span>
+          <h1>৳ <span id="profile-balance">0.00</span></h1>
+        </div>
+      </div>
+
+      <!-- Withdraw Section -->
+      <div class="wallet-action-card">
+        <h4 data-i18n="withdraw">টাকা উত্তোলন (Withdraw)</h4>
+        <p class="limit-note">Recharge & bKash Min: ৳20 | Nagad Min: ৳100</p>
+        <div class="form-group">
+          <select id="withdraw-method" class="gaming-input" onchange="validateWithdrawBtn()">
+            <option value="recharge">Mobile Recharge (Min ৳20)</option>
+            <option value="bkash">bKash (Min ৳20)</option>
+            <option value="nagad">Nagad (Min ৳100)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <input type="number" id="withdraw-amount" class="gaming-input" placeholder="পরিমাণ (৳)" oninput="validateWithdrawBtn()">
+        </div>
+        <div class="form-group">
+          <input type="text" id="withdraw-account" class="gaming-input" placeholder="একাউন্ট / মোবাইল নম্বর">
+        </div>
+        <button id="btn-withdraw-submit" class="btn-secondary" disabled onclick="handleWithdrawSubmit()" data-i18n="submit_withdraw">উত্তোলন রিকুয়েস্ট দিন</button>
+
+        <!-- History -->
+        <div class="history-box">
+          <h5 data-i18n="withdraw_history">উত্তোলন হিস্টোরি</h5>
+          <ul id="withdraw-history-list" class="history-list">
+            <!-- Dynamic History -->
+          </ul>
+        </div>
+      </div>
+
+      <!-- Deposit Section -->
+      <div class="wallet-action-card">
+        <h4 data-i18n="deposit">ডিপোজিট (Deposit)</h4>
+        <p class="limit-note">bKash Min: ৳10 | Nagad Min: ৳100</p>
+        
+        <div class="deposit-methods">
+          <button class="dep-tab-btn active" onclick="switchDepTab('bkash')">bKash Payment</button>
+          <button class="dep-tab-btn" onclick="switchDepTab('nagad')">Nagad Send Money</button>
+        </div>
+
+        <!-- bKash Deposit UI -->
+        <div id="dep-bkash-box" class="dep-tab-content active">
+          <p>বিকাশ এর মাধ্যমে পেমেন্ট করতে নিচের লিংকে ক্লিক করুন:</p>
+          <a href="https://shop.bkash.com/gravity-internet01816640707/paymentlink" target="_blank" class="bkash-pay-link">
+            <i class="fa-solid fa-external-link"></i> bKash Payment Link
+          </a>
+        </div>
+
+        <!-- Nagad Deposit UI -->
+        <div id="dep-nagad-box" class="dep-tab-content">
+          <p>আমাদের নগদ পার্সোনাল নাম্বারে Send Money করুন:</p>
+          <div class="copy-number-box">
+            <strong>01323431323</strong>
+            <button onclick="navigator.clipboard.writeText('01323431323'); alert('নম্বর কপি হয়েছে!');"><i class="fa-regular fa-copy"></i></button>
+          </div>
+        </div>
+
+        <!-- Deposit Submit Form -->
+        <div class="deposit-form">
+          <div class="form-group">
+            <input type="number" id="dep-amount" class="gaming-input" placeholder="ডিপোজিটকৃত পরিমাণ (৳)">
+          </div>
+          <div class="form-group">
+            <input type="text" id="dep-phone" class="gaming-input" placeholder="যে নম্বর থেকে পেমেন্ট করেছেন">
+          </div>
+          <div class="form-group">
+            <input type="text" id="dep-trxi" class="gaming-input" placeholder="Transaction ID (TrxID)">
+          </div>
+          <button class="btn-primary-glow" onclick="handleDepositSubmit()" data-i18n="submit_deposit">ডিপোজিট রিকুয়েস্ট পাঠান</button>
+        </div>
+      </div>
+
+      <!-- App Settings -->
+      <div class="wallet-action-card">
+        <h4 data-i18n="settings">সেটিংস</h4>
+        <div class="setting-row">
+          <span data-i18n="change_lang">ভাষা পরিবর্তন:</span>
+          <select id="app-lang-select" class="gaming-input inline-select" onchange="selectAppLanguage(this.value)">
+            <option value="bn">বাংলা</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Navigation Bar -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('page-home', this)">
+      <i class="fa-solid fa-house"></i>
+      <span data-i18n="nav_home">হোম</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('page-earn', this)">
+      <i class="fa-solid fa-coins"></i>
+      <span data-i18n="nav_earn">আর্ন</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('page-profile', this)">
+      <i class="fa-solid fa-user"></i>
+      <span data-i18n="nav_profile">প্রোফাইল</span>
+    </button>
+  </nav>
+
+  <!-- Multi-step Join Tournament Modal -->
+  <div id="join-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeJoinWizard()">&times;</button>
+      
+      <!-- Wizard Step 1: Game Name -->
+      <div id="wizard-step-1" class="wizard-step active">
+        <h3>ধাপ ১: ইন-গেম নেম</h3>
+        <p>আপনার Free Fire এর হুবহু গেম নেম লিখুন:</p>
+        <div class="form-group">
+          <input type="text" id="input-ff-name" class="gaming-input" placeholder="Free Fire Name">
+        </div>
+        <button class="btn-primary-glow" onclick="submitStep1()">Submit & Next</button>
+      </div>
+
+      <!-- Wizard Step 2: Player UID -->
+      <div id="wizard-step-2" class="wizard-step">
+        <h3>ধাপ ২: প্লেয়ার UID</h3>
+        <p>আপনার Free Fire UID দিন:</p>
+        <div class="form-group">
+          <input type="number" id="input-ff-uid" class="gaming-input" placeholder="Free Fire Player UID">
+        </div>
+        <button class="btn-primary-glow" onclick="submitStep2()">Submit & Next</button>
+      </div>
+
+      <!-- Wizard Step 3: Final Team Join Confirmation -->
+      <div id="wizard-step-3" class="wizard-step">
+        <h3>ধাপ ৩: টুর্নামেন্টে ফাইনাল জয়েন</h3>
+        <p>টিমে স্থান নিশ্চিত করতে নিচের ফাইনাল বাটনটি চাপুন। একাউন্ট থেকে ৳১ কাটা হবে।</p>
+        <button class="btn-primary-glow animate-pulse" onclick="submitStep3Final()">Confirm & Join Team</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Firebase Integration Script -->
+  <script type="module" src="app.js"></script>
 </body>
-</html>
+  </html>

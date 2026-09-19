@@ -1,7 +1,7 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { 
   getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, arrayUnion, collection, query, where, orderBy 
-} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -239,6 +239,8 @@ function listenCategoryMatches(categoryKey) {
       `;
       container.appendChild(card);
     });
+  }, (error) => {
+    console.error("Error fetching matches:", error);
   });
 }
 
@@ -279,12 +281,12 @@ function listenLiveMatches() {
 }
 
 // --- WALLET: DEPOSIT, WITHDRAW & HISTORY ---
-window.switchWalletTab = function(tabName) {
+window.switchWalletTab = function(tabName, evt) {
   document.querySelectorAll(".wallet-tab-btn").forEach(btn => btn.classList.remove("active"));
   document.querySelectorAll(".wallet-tab-content").forEach(content => content.classList.remove("active"));
 
-  if (event && event.currentTarget) {
-    event.currentTarget.classList.add("active");
+  if (evt && evt.currentTarget) {
+    evt.currentTarget.classList.add("active");
   }
   const tabEl = document.getElementById(`wallet-tab-${tabName}`);
   if (tabEl) tabEl.classList.add("active");
@@ -385,59 +387,60 @@ window.submitWithdraw = async function() {
   }
 };
 
+// Fixed & Optimized Realtime Transaction History Listener
 function listenTransactionHistory() {
   const container = document.getElementById("history-list-container");
 
-  // Realtime updates on user's deposits & withdrawals
-  const depQuery = query(collection(db, "deposits"), where("user_id", "==", currentUser.id));
-  const withQuery = query(collection(db, "withdrawals"), where("user_id", "==", currentUser.id));
+  let depositsList = [];
+  let withdrawalsList = [];
 
-  const renderTx = () => {
-    Promise.all([getDocList(depQuery), getDocList(withQuery)]).then(([deps, withdrawals]) => {
-      const allTx = [...deps, ...withdrawals].sort((a, b) => b.timestamp - a.timestamp);
-      
-      if (!container) return;
-      container.innerHTML = "";
+  const updateHistoryUI = () => {
+    if (!container) return;
+    const combined = [...depositsList, ...withdrawalsList].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-      if (allTx.length === 0) {
-        container.innerHTML = `<p class="limit-note" style="text-align:center;">No transaction history found.</p>`;
-        return;
-      }
+    container.innerHTML = "";
 
-      allTx.forEach(tx => {
-        const statusClass = (tx.status || "pending").toLowerCase();
-        const formattedDate = new Date(tx.timestamp).toLocaleDateString("en-US", {
-          month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
-        });
+    if (combined.length === 0) {
+      container.innerHTML = `<p class="limit-note" style="text-align:center;">No transaction history found.</p>`;
+      return;
+    }
 
-        const item = document.createElement("div");
-        item.className = "history-item";
-        item.innerHTML = `
-          <div>
-            <strong>${tx.type || 'Transaction'} (${tx.method || 'bKash'})</strong>
-            <br><span class="limit-note">${formattedDate}</span>
-          </div>
-          <div style="text-align:right;">
-            <strong>৳ ${tx.amount}</strong>
-            <br><span class="status-badge ${statusClass}">${tx.status || 'Pending'}</span>
-          </div>
-        `;
-        container.appendChild(item);
-      });
+    combined.forEach(tx => {
+      const statusClass = (tx.status || "pending").toLowerCase();
+      const formattedDate = tx.timestamp ? new Date(tx.timestamp).toLocaleDateString("en-US", {
+        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+      }) : "N/A";
+
+      const item = document.createElement("div");
+      item.className = "history-item";
+      item.innerHTML = `
+        <div>
+          <strong>${tx.type || 'Transaction'} (${tx.method || 'bKash'})</strong>
+          <br><span class="limit-note">${formattedDate}</span>
+        </div>
+        <div style="text-align:right;">
+          <strong>৳ ${tx.amount}</strong>
+          <br><span class="status-badge ${statusClass}">${tx.status || 'Pending'}</span>
+        </div>
+      `;
+      container.appendChild(item);
     });
   };
 
-  onSnapshot(depQuery, renderTx);
-  onSnapshot(withQuery, renderTx);
-}
+  const depQuery = query(collection(db, "deposits"), where("user_id", "==", currentUser.id));
+  const withQuery = query(collection(db, "withdrawals"), where("user_id", "==", currentUser.id));
 
-async function getDocList(q) {
-  const snapshot = await getDoc(q); // Helper reference wrapper
-  const list = [];
-  onSnapshot(q, (snap) => {
-    snap.forEach(d => list.push(d.data()));
+  onSnapshot(depQuery, (snap) => {
+    depositsList = [];
+    snap.forEach(d => depositsList.push(d.data()));
+    updateHistoryUI();
   });
-  return list;
+
+  onSnapshot(withQuery, (snap) => {
+    withdrawalsList = [];
+    snap.forEach(d => withdrawalsList.push(d.data()));
+    updateHistoryUI();
+  });
 }
 
 // --- MULTI-STEP JOIN WIZARD WITH AD INTEGRATIONS ---
@@ -449,9 +452,10 @@ window.openJoinModal = function(matchId, entryFee, maxSlots) {
   }
 
   currentSelectedMatch = { id: matchId, fee: entryFee, maxSlots: maxSlots };
-  document.getElementById("modal-entry-fee").innerText = entryFee;
+  const feeEl = document.getElementById("modal-entry-fee");
+  if (feeEl) feeEl.innerText = entryFee;
   
-  goToWizardStep(1);
+  showWizardStepInternal(1);
   document.getElementById("join-modal").classList.remove("hidden");
 };
 
@@ -459,13 +463,12 @@ window.closeJoinModal = function() {
   document.getElementById("join-modal").classList.add("hidden");
 };
 
-function goToWizardStep(stepNum) {
+function showWizardStepInternal(stepNum) {
   document.querySelectorAll(".wizard-step").forEach(s => s.classList.remove("active"));
   const stepEl = document.getElementById(`wizard-step-${stepNum}`);
   if (stepEl) stepEl.classList.add("active");
 }
 
-// Step 1 Trigger -> Adexium Interstitial (Fallback Monetag)
 window.goToWizardStep = function(stepNum) {
   if (stepNum === 2) {
     const ign = document.getElementById("join-game-name").value.trim();
@@ -492,12 +495,6 @@ window.goToWizardStep = function(stepNum) {
     showWizardStepInternal(stepNum);
   }
 };
-
-function showWizardStepInternal(stepNum) {
-  document.querySelectorAll(".wizard-step").forEach(s => s.classList.remove("active"));
-  const stepEl = document.getElementById(`wizard-step-${stepNum}`);
-  if (stepEl) stepEl.classList.add("active");
-}
 
 // Step 2 Trigger -> Gigapub Integration
 window.confirmMatchJoin = function() {
@@ -577,4 +574,4 @@ async function processTournamentRegistration() {
   } catch (err) {
     alert("Join failed: " + err.message);
   }
-    }
+      }

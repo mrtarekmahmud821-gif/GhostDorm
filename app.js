@@ -23,7 +23,7 @@ let currentUser = {
   id: "guest_user",
   first_name: "Guest Player",
   username: "@guest",
-  photo_url: "https://via.placeholder.com/80"
+  photo_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmZ3dl2NZJPLDStjwXI8wbVfPMFeGzGVrr5YLxhk8MUtqCpxb1bOfE4_Y&s=10"
 };
 
 let userBalance = 0;

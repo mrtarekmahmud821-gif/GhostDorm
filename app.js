@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 import { 
-  getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, arrayUnion, collection 
+  getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, arrayUnion, collection, query, where, orderBy 
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 // Firebase Configuration
@@ -18,70 +18,33 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Language Translations Dictionary
-const translations = {
-  bn: {
-    last_winner: "সর্বশেষ উইনার",
-    daily_tournament: "দৈনিক ফ্রি ফায়ার টুর্নামেন্ট",
-    entry_fee: "এন্ট্রি ফি:",
-    joined_players: "অংশগ্রহণকারী:",
-    join_now: "জয়েন করুন (৳১)",
-    room_details: "রুমে যোগ দেওয়ার তথ্য (লাইভ)",
-    joined_list_title: "প্লেয়ার তালিকা (৪৮ জন)",
-    coming_soon: "কামিং সুন! নতুন টাস্ক এবং আর্নিং অপশন শীঘ্রই চালু করা হবে।",
-    my_wallet: "মাই ওয়ালেট",
-    current_balance: "বর্তমান ব্যালেন্স",
-    withdraw: "টাকা উত্তোলন (Withdraw)",
-    submit_withdraw: "উত্তোলন রিকুয়েস্ট দিন",
-    withdraw_history: "উত্তোলন হিস্টোরি",
-    deposit: "ডিপোজিট (Deposit)",
-    submit_deposit: "ডিপোজিট রিকুয়েস্ট পাঠান",
-    settings: "সেটিংস",
-    change_lang: "ভাষা পরিবর্তন:",
-    nav_home: "হোম",
-    nav_earn: "আর্ন",
-    nav_profile: "প্রোফাইল"
-  },
-  en: {
-    last_winner: "Last Winner",
-    daily_tournament: "Daily Free Fire Tournament",
-    entry_fee: "Entry Fee:",
-    joined_players: "Joined:",
-    join_now: "Join Now (৳1)",
-    room_details: "Room Credentials (Live)",
-    joined_list_title: "Player List (48 Slots)",
-    coming_soon: "Coming Soon! New tasks will be added shortly.",
-    my_wallet: "My Wallet",
-    current_balance: "Current Balance",
-    withdraw: "Withdraw Funds",
-    submit_withdraw: "Request Withdraw",
-    withdraw_history: "Withdrawal History",
-    deposit: "Deposit Funds",
-    submit_deposit: "Submit Deposit",
-    settings: "Settings",
-    change_lang: "Language:",
-    nav_home: "Home",
-    nav_earn: "Earn",
-    nav_profile: "Profile"
-  }
-};
-
-// State Variables
+// Application State
 let currentUser = {
   id: "guest_user",
   first_name: "Guest Player",
-  username: "guest",
-  photo_url: "https://via.placeholder.com/45"
+  username: "@guest",
+  photo_url: "https://via.placeholder.com/80"
 };
-let userBalance = 0;
-let joinedPlayersList = [];
-let isUserJoined = false;
-let currentSelectedMode = "lone_wolf_solo";
-let tempStepData = { ff_name: "", ff_uid: "" };
-let matchUnsubscribe = null;
 
-// Initialize Telegram WebApp Data & UI
+let userBalance = 0;
+let currentSelectedMode = "";
+let currentSelectedMatch = null;
+let tempStepData = { ff_name: "", ff_uid: "" };
+let activeMatchUnsubscribe = null;
+
+// Category Configurations & Max Limits
+const MODE_CONFIGS = {
+  'lone_wolf_1v1': { title: 'Lone Wolf Solo (1V1)', maxSlots: 2 },
+  'lone_wolf_2v2': { title: 'Lone Wolf Duo (2V2)', maxSlots: 4 },
+  'clash_squad_4v4': { title: 'Clash Squad (4V4)', maxSlots: 8 },
+  'br_solo': { title: 'Battle Royale Solo', maxSlots: 48 },
+  'br_duo': { title: 'Battle Royale Duo', maxSlots: 48 },
+  'br_squad': { title: 'Battle Royale Squad', maxSlots: 48 }
+};
+
+// --- INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
+  // Telegram WebApp Integration
   const tg = window.Telegram?.WebApp;
   if (tg) {
     tg.ready();
@@ -89,161 +52,225 @@ document.addEventListener("DOMContentLoaded", () => {
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
       const u = tg.initDataUnsafe.user;
       currentUser.id = u.id.toString();
-      currentUser.first_name = u.first_name || "User";
-      currentUser.username = u.username ? `@${u.username}` : "";
+      currentUser.first_name = u.first_name || "Player";
+      currentUser.username = u.username ? `@${u.username}` : "@player";
       if (u.photo_url) currentUser.photo_url = u.photo_url;
     }
   }
 
-  // Update UI Header Profile
-  document.getElementById("user-avatar").src = currentUser.photo_url;
-  document.getElementById("user-name").innerText = currentUser.first_name;
-  document.getElementById("user-username").innerText = currentUser.username;
+  // Render User Header Profile
+  renderHeaderProfile();
 
-  // Language Setup
-  const savedLang = localStorage.getItem("app_lang");
-  if (!savedLang) {
-    const langBox = document.getElementById("lang-selector-box");
-    if (langBox) langBox.classList.remove("hidden");
-  } else {
-    applyLanguage(savedLang);
-    hideLoadingScreen();
-  }
-
-  // Realtime Firebase Listeners
+  // Firestore Realtime Listeners
   initUserAccount();
   listenLiveMatches();
+  listenTransactionHistory();
 });
 
-// Language Functions
-window.selectAppLanguage = function(lang) {
-  localStorage.setItem("app_lang", lang);
-  applyLanguage(lang);
-  hideLoadingScreen();
-  const selectEl = document.getElementById("app-lang-select");
-  if (selectEl) selectEl.value = lang;
-};
+function renderHeaderProfile() {
+  const headerAvatar = document.getElementById("header-user-avatar");
+  const headerName = document.getElementById("header-user-name");
+  const headerId = document.getElementById("header-user-id");
 
-function applyLanguage(lang) {
-  const dict = translations[lang] || translations['bn'];
-  document.querySelectorAll("[data-i18n]").forEach(el => {
-    const key = el.getAttribute("data-i18n");
-    if (dict[key]) el.innerText = dict[key];
-  });
+  if (headerAvatar) headerAvatar.src = currentUser.photo_url;
+  if (headerName) headerName.innerText = currentUser.first_name;
+  if (headerId) headerId.innerText = currentUser.username;
+
+  const profAvatar = document.getElementById("profile-user-avatar");
+  const profName = document.getElementById("profile-user-name");
+  const profId = document.getElementById("profile-user-id");
+
+  if (profAvatar) profAvatar.src = currentUser.photo_url;
+  if (profName) profName.innerText = currentUser.first_name;
+  if (profId) profId.innerText = currentUser.username;
 }
 
-function hideLoadingScreen() {
-  const loader = document.getElementById("loading-screen");
-  if (loader) loader.classList.add("hidden");
-}
+// --- NAVIGATION HANDLERS ---
+window.navigateTo = function(pageId, element) {
+  document.querySelectorAll(".page-section").forEach(sec => sec.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(btn => btn.classList.remove("active"));
 
-// Navigation Functions
-window.switchTab = function(pageId, btnEl) {
-  document.querySelectorAll(".page-section").forEach(p => p.classList.remove("active"));
-  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
-  document.getElementById(pageId).classList.add("active");
-  btnEl.classList.add("active");
+  const targetPage = document.getElementById(`page-${pageId}`);
+  if (targetPage) targetPage.classList.add("active");
+  if (element) element.classList.add("active");
 };
 
-window.switchDepTab = function(type) {
-  document.querySelectorAll(".dep-tab-btn").forEach(b => b.classList.remove("active"));
-  document.querySelectorAll(".dep-tab-content").forEach(c => c.classList.remove("active"));
-  if (type === 'bkash') {
-    if (event && event.target) event.target.classList.add("active");
-    document.getElementById("dep-bkash-box").classList.add("active");
-  } else {
-    if (event && event.target) event.target.classList.add("active");
-    document.getElementById("dep-nagad-box").classList.add("active");
-  }
-};
-
-window.copyToClipboard = function(text) {
-  navigator.clipboard.writeText(text);
-  alert("কপি হয়েছে: " + text);
-};
-
-// Match Category Open & Close Handlers
-window.openMatchCategory = function(modeKey) {
-  currentSelectedMode = modeKey;
-  const grid = document.querySelector(".match-categories-grid");
-  if (grid) grid.classList.add("hidden");
-
-  const detailBox = document.getElementById("tournament-detail-box");
-  if (detailBox) detailBox.classList.remove("hidden");
-
-  const titles = {
-    'lone_wolf_solo': 'Lone Wolf Solo 1V1',
-    'lone_wolf_duo': 'Lone Wolf Duo 2V2',
-    'clash_squad': 'Clash Squad 4V4',
-    'br_solo': 'Battle Royale Solo',
-    'br_duo': 'Battle Royale Duo',
-    'br_squad': 'Battle Royale Squad'
-  };
-
-  const titleEl = document.getElementById("selected-match-title");
-  if (titleEl) titleEl.innerText = titles[modeKey] || 'Match Details';
-
-  listenMatchDetails(modeKey);
-};
-
-window.closeCategoryDetail = function() {
-  const detailBox = document.getElementById("tournament-detail-box");
-  if (detailBox) detailBox.classList.add("hidden");
-
-  const grid = document.querySelector(".match-categories-grid");
-  if (grid) grid.classList.remove("hidden");
-};
-
-// --- FIREBASE FIRESTORE LISTENERS ---
+// --- FIRESTORE REALTIME USER ACCOUNT ---
 function initUserAccount() {
   const userRef = doc(db, "users", currentUser.id);
   onSnapshot(userRef, (snap) => {
     if (snap.exists()) {
-      userBalance = snap.data().balance || 0;
+      const data = snap.data();
+      userBalance = data.balance || 0;
+      
+      const playedEl = document.getElementById("stat-played");
+      const winsEl = document.getElementById("stat-wins");
+      if (playedEl) playedEl.innerText = data.matchesPlayed || 0;
+      if (winsEl) winsEl.innerText = data.wins || 0;
     } else {
       setDoc(userRef, {
         name: currentUser.first_name,
         username: currentUser.username,
-        balance: 0
+        balance: 0,
+        matchesPlayed: 0,
+        wins: 0
       });
       userBalance = 0;
     }
-    const balAmt = document.getElementById("balance-amount");
-    if (balAmt) balAmt.innerText = userBalance.toFixed(2);
-
-    const profBal = document.getElementById("profile-balance");
-    if (profBal) profBal.innerText = userBalance.toFixed(2);
-
-    validateWithdrawBtn();
+    
+    // Update Balance UI
+    updateBalanceDisplays();
   });
 }
 
+function updateBalanceDisplays() {
+  const formattedBal = userBalance.toFixed(2);
+  const hBal = document.getElementById("header-balance");
+  const pBal = document.getElementById("profile-balance-display");
+  const wBal = document.getElementById("wallet-balance-display");
+
+  if (hBal) hBal.innerText = formattedBal;
+  if (pBal) pBal.innerText = formattedBal;
+  if (wBal) wBal.innerText = formattedBal;
+}
+
+// --- CATEGORY MATCHES & FIRESTORE LISTENERS ---
+window.openCategoryMatches = function(categoryKey) {
+  currentSelectedMode = categoryKey;
+  const grid = document.getElementById("category-list-view");
+  const matchesView = document.getElementById("matches-list-view");
+
+  if (grid) grid.classList.add("hidden");
+  if (matchesView) matchesView.classList.remove("hidden");
+
+  const config = MODE_CONFIGS[categoryKey] || { title: 'Matches', maxSlots: 48 };
+  const titleEl = document.getElementById("selected-category-title");
+  if (titleEl) titleEl.innerText = config.title;
+
+  listenCategoryMatches(categoryKey);
+};
+
+window.backToCategories = function() {
+  if (activeMatchUnsubscribe) activeMatchUnsubscribe();
+  
+  const matchesView = document.getElementById("matches-list-view");
+  const grid = document.getElementById("category-list-view");
+
+  if (matchesView) matchesView.classList.add("hidden");
+  if (grid) grid.classList.remove("hidden");
+};
+
+function listenCategoryMatches(categoryKey) {
+  if (activeMatchUnsubscribe) activeMatchUnsubscribe();
+
+  const container = document.getElementById("active-matches-container");
+  const config = MODE_CONFIGS[categoryKey] || { maxSlots: 48 };
+
+  // Fetch active matches from Admin Panel for this specific category
+  const q = query(
+    collection(db, "tournaments"), 
+    where("category", "==", categoryKey),
+    where("status", "==", "active")
+  );
+
+  activeMatchUnsubscribe = onSnapshot(q, (snapshot) => {
+    if (!container) return;
+    container.innerHTML = "";
+
+    if (snapshot.empty) {
+      container.innerHTML = `<div class="empty-matches-msg">No Active Matches Available for this category.</div>`;
+      return;
+    }
+
+    snapshot.forEach((docSnap) => {
+      const match = { id: docSnap.id, ...docSnap.data() };
+      const players = match.players || [];
+      const joinedCount = players.length;
+      const maxSlots = match.maxSlots || config.maxSlots;
+      const isJoined = players.some(p => p.id === currentUser.id);
+      const isFull = joinedCount >= maxSlots;
+      const progressPercent = Math.min(100, (joinedCount / maxSlots) * 100);
+
+      let prizeHTML = "";
+      if (match.prizes && Array.isArray(match.prizes)) {
+        prizeHTML = match.prizes.map(p => `
+          <div class="prize-item">
+            <span class="prize-rank">${p.rank}</span>
+            <span class="prize-val">${p.val}</span>
+          </div>
+        `).join("");
+      } else {
+        prizeHTML = `
+          <div class="prize-item">
+            <span class="prize-rank">Total Prize</span>
+            <span class="prize-val">৳ ${match.totalPrize || 0}</span>
+          </div>
+        `;
+      }
+
+      const card = document.createElement("div");
+      card.className = "tournament-card";
+      card.innerHTML = `
+        <div class="card-header">
+          <h3>${match.title || "Free Fire Tournament"}</h3>
+          <span class="match-time"><i class="fa-regular fa-clock"></i> ${match.matchTime || "Today"}</span>
+        </div>
+        
+        <div class="prize-pool-grid">${prizeHTML}</div>
+        
+        <div class="entry-fee-box">
+          <span>Entry Fee:</span>
+          <strong class="prize-val">৳ ${match.entryFee || 0}</strong>
+        </div>
+
+        <div class="slots-progress">
+          <div class="progress-info">
+            <span>Slots Joined</span>
+            <span>${joinedCount}/${maxSlots}</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: ${progressPercent}%;"></div>
+          </div>
+        </div>
+
+        <button class="btn-primary-glow" ${isJoined || isFull ? 'disabled' : ''} onclick="openJoinModal('${match.id}', ${match.entryFee || 0}, ${maxSlots})">
+          ${isJoined ? 'Joined' : (isFull ? 'Match Full' : 'Join Match')}
+        </button>
+      `;
+      container.appendChild(card);
+    });
+  });
+}
+
+// --- LIVE MATCHES FIRESTORE LISTENER ---
 function listenLiveMatches() {
   onSnapshot(collection(db, "live_matches"), (snapshot) => {
     const container = document.getElementById("live-matches-container");
     if (!container) return;
     container.innerHTML = "";
+
     if (snapshot.empty) {
-      container.innerHTML = "<p style='color: var(--text-sub); text-align: center; margin-top: 20px;'>বর্তমানে কোনো লাইভ ম্যাচ নেই</p>";
+      container.innerHTML = `<p style="color: var(--text-sub); text-align: center; margin-top: 30px;">No Live Matches available right now.</p>`;
       return;
     }
+
     snapshot.forEach((docSnap) => {
       const data = docSnap.data();
       const card = document.createElement("div");
-      card.className = "live-match-card";
+      card.className = "wallet-action-card";
       card.innerHTML = `
-        <div class="live-status-badge"><span class="pulse-dot"></span> LIVE</div>
-        <h4>${data.title || "Free Fire Match"}</h4>
-        <p class="live-mode-text">ম্যাপ: ${data.map || "Bermuda"} | সময়: ${data.time || "Live"}</p>
-        <div class="credentials-container">
-          <div class="cred-item">
-            <span>Room ID:</span> <strong>${data.room_id || "N/A"}</strong>
-            <button onclick="copyToClipboard('${data.room_id || ""}')"><i class="fa-regular fa-copy"></i></button>
-          </div>
-          <div class="cred-item">
-            <span>Password:</span> <strong>${data.room_pass || "N/A"}</strong>
-            <button onclick="copyToClipboard('${data.room_pass || ""}')"><i class="fa-regular fa-copy"></i></button>
-          </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h4 style="color: var(--gold-color);">${data.title || "Live Free Fire Match"}</h4>
+          <span class="status-badge approved">LIVE</span>
+        </div>
+        <p class="limit-note" style="margin-bottom: 10px;">Time: ${data.time || "Live Now"}</p>
+        <div class="copy-number-box" style="margin-bottom: 6px;">
+          <span>Room ID: <strong id="room-id-${docSnap.id}">${data.room_id || "N/A"}</strong></span>
+          <button onclick="copyNumber('room-id-${docSnap.id}')"><i class="fa-solid fa-copy"></i> Copy</button>
+        </div>
+        <div class="copy-number-box">
+          <span>Password: <strong id="room-pass-${docSnap.id}">${data.room_pass || "N/A"}</strong></span>
+          <button onclick="copyNumber('room-pass-${docSnap.id}')"><i class="fa-solid fa-copy"></i> Copy</button>
         </div>
       `;
       container.appendChild(card);
@@ -251,146 +278,245 @@ function listenLiveMatches() {
   });
 }
 
-function listenMatchDetails(mode) {
-  if (matchUnsubscribe) matchUnsubscribe();
+// --- WALLET: DEPOSIT, WITHDRAW & HISTORY ---
+window.switchWalletTab = function(tabName) {
+  document.querySelectorAll(".wallet-tab-btn").forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll(".wallet-tab-content").forEach(content => content.classList.remove("active"));
 
-  const matchRef = doc(db, "tournaments", mode);
-  matchUnsubscribe = onSnapshot(matchRef, (snap) => {
-    if (!snap.exists()) {
-      joinedPlayersList = [];
-      updateSlotUI(0);
-      renderSlotsGrid();
-      resetJoinButton();
-      return;
-    }
-    const data = snap.data();
-
-    // Update Slots
-    joinedPlayersList = data.players || [];
-    const count = joinedPlayersList.length;
-    updateSlotUI(count);
-
-    // Render Slots Grid List
-    renderSlotsGrid();
-
-    // Check if current user is in match
-    isUserJoined = joinedPlayersList.some(p => p.id === currentUser.id);
-    const joinBtn = document.getElementById("btn-join-match");
-    if (joinBtn) {
-      if (isUserJoined) {
-        joinBtn.disabled = true;
-        joinBtn.innerText = "Joined";
-      } else if (count >= 48) {
-        joinBtn.disabled = true;
-        joinBtn.innerText = "Team Full";
-      } else {
-        joinBtn.disabled = false;
-        joinBtn.innerText = "জয়েন করুন (৳১)";
-      }
-    }
-  });
-}
-
-function updateSlotUI(count) {
-  const slotText = document.getElementById("slot-count-text");
-  if (slotText) slotText.innerText = `${count} / 48`;
-
-  const pct = (count / 48) * 100;
-  const barFill = document.getElementById("progress-bar-fill");
-  if (barFill) barFill.style.width = `${pct}%`;
-}
-
-function resetJoinButton() {
-  const joinBtn = document.getElementById("btn-join-match");
-  if (joinBtn) {
-    joinBtn.disabled = false;
-    joinBtn.innerText = "জয়েন করুন (৳১)";
+  if (event && event.currentTarget) {
+    event.currentTarget.classList.add("active");
   }
-}
-
-function renderSlotsGrid() {
-  const container = document.getElementById("players-slot-list");
-  if (!container) return;
-  container.innerHTML = "";
-  for (let i = 1; i <= 48; i++) {
-    const pData = joinedPlayersList[i - 1];
-    const item = document.createElement("div");
-    item.className = "slot-item";
-    item.innerHTML = `
-      <span class="slot-num">#${i}</span>
-      <span class="slot-name">${pData ? pData.ff_name : "Empty"}</span>
-    `;
-    container.appendChild(item);
-  }
-}
-
-// --- MULTI-STEP JOIN TOURNAMENT & AD INTEGRATION ---
-window.openJoinWizard = function() {
-  if (userBalance < 1) {
-    alert("পর্যাপ্ত ব্যালেন্স নেই! দয়া করে ডিপোজিট করুন।");
-    const profileNav = document.querySelectorAll(".nav-item")[3] || document.querySelectorAll(".nav-item")[2];
-    switchTab('page-profile', profileNav);
-    return;
-  }
-  document.getElementById("join-modal").classList.remove("hidden");
-  showWizardStep(1);
+  const tabEl = document.getElementById(`wallet-tab-${tabName}`);
+  if (tabEl) tabEl.classList.add("active");
 };
 
-window.closeJoinWizard = function() {
+window.selectDepMethod = function(method, btn) {
+  document.querySelectorAll(".dep-tab-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  
+  const phoneElement = document.getElementById("dep-phone-number");
+  if (phoneElement) {
+    phoneElement.innerText = method === 'bkash' ? '01700000000' : '01800000000';
+  }
+};
+
+window.copyNumber = function(elementId) {
+  const el = document.getElementById(elementId);
+  if (el) {
+    navigator.clipboard.writeText(el.innerText);
+    alert("Copied to clipboard!");
+  }
+};
+
+window.submitDeposit = async function() {
+  const amount = parseFloat(document.getElementById("dep-amount").value);
+  const trxid = document.getElementById("dep-trxid").value.trim();
+
+  if (!amount || amount < 50) {
+    return alert("Minimum deposit amount is ৳50.");
+  }
+  if (!trxid) {
+    return alert("Please enter Transaction ID (TrxID).");
+  }
+
+  try {
+    const depRef = doc(db, "deposits", `${currentUser.id}_${Date.now()}`);
+    await setDoc(depRef, {
+      user_id: currentUser.id,
+      user_name: currentUser.first_name,
+      amount: amount,
+      trx_id: trxid,
+      type: "Deposit",
+      status: "Pending",
+      timestamp: Date.now()
+    });
+
+    alert("Deposit request submitted successfully!");
+    document.getElementById("dep-amount").value = "";
+    document.getElementById("dep-trxid").value = "";
+  } catch (err) {
+    alert("Failed to submit deposit: " + err.message);
+  }
+};
+
+window.submitWithdraw = async function() {
+  const method = document.getElementById("withdraw-method").value;
+  const num = document.getElementById("withdraw-number").value.trim();
+  const amount = parseFloat(document.getElementById("withdraw-amount").value);
+
+  if (!num) {
+    return alert("Please enter your account number.");
+  }
+  if (!amount || amount < 100) {
+    return alert("Minimum withdrawal amount is ৳100.");
+  }
+  if (amount > userBalance) {
+    return alert("Insufficient Account Balance!");
+  }
+
+  const userRef = doc(db, "users", currentUser.id);
+  const reqRef = doc(db, "withdrawals", `${currentUser.id}_${Date.now()}`);
+
+  try {
+    await runTransaction(db, async (transaction) => {
+      const uSnap = await transaction.get(userRef);
+      const curBal = uSnap.data().balance || 0;
+
+      if (curBal < amount) throw new Error("Insufficient Balance!");
+
+      transaction.update(userRef, { balance: curBal - amount });
+      transaction.set(reqRef, {
+        user_id: currentUser.id,
+        user_name: currentUser.first_name,
+        method: method,
+        account: num,
+        amount: amount,
+        type: "Withdrawal",
+        status: "Pending",
+        timestamp: Date.now()
+      });
+    });
+
+    alert("Withdrawal request submitted successfully!");
+    document.getElementById("withdraw-number").value = "";
+    document.getElementById("withdraw-amount").value = "";
+  } catch (err) {
+    alert("Withdrawal failed: " + err.message);
+  }
+};
+
+function listenTransactionHistory() {
+  const container = document.getElementById("history-list-container");
+
+  // Realtime updates on user's deposits & withdrawals
+  const depQuery = query(collection(db, "deposits"), where("user_id", "==", currentUser.id));
+  const withQuery = query(collection(db, "withdrawals"), where("user_id", "==", currentUser.id));
+
+  const renderTx = () => {
+    Promise.all([getDocList(depQuery), getDocList(withQuery)]).then(([deps, withdrawals]) => {
+      const allTx = [...deps, ...withdrawals].sort((a, b) => b.timestamp - a.timestamp);
+      
+      if (!container) return;
+      container.innerHTML = "";
+
+      if (allTx.length === 0) {
+        container.innerHTML = `<p class="limit-note" style="text-align:center;">No transaction history found.</p>`;
+        return;
+      }
+
+      allTx.forEach(tx => {
+        const statusClass = (tx.status || "pending").toLowerCase();
+        const formattedDate = new Date(tx.timestamp).toLocaleDateString("en-US", {
+          month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+        });
+
+        const item = document.createElement("div");
+        item.className = "history-item";
+        item.innerHTML = `
+          <div>
+            <strong>${tx.type || 'Transaction'} (${tx.method || 'bKash'})</strong>
+            <br><span class="limit-note">${formattedDate}</span>
+          </div>
+          <div style="text-align:right;">
+            <strong>৳ ${tx.amount}</strong>
+            <br><span class="status-badge ${statusClass}">${tx.status || 'Pending'}</span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    });
+  };
+
+  onSnapshot(depQuery, renderTx);
+  onSnapshot(withQuery, renderTx);
+}
+
+async function getDocList(q) {
+  const snapshot = await getDoc(q); // Helper reference wrapper
+  const list = [];
+  onSnapshot(q, (snap) => {
+    snap.forEach(d => list.push(d.data()));
+  });
+  return list;
+}
+
+// --- MULTI-STEP JOIN WIZARD WITH AD INTEGRATIONS ---
+window.openJoinModal = function(matchId, entryFee, maxSlots) {
+  if (userBalance < entryFee) {
+    alert("Insufficient Balance! Please deposit money to join.");
+    navigateTo('wallet', document.querySelectorAll(".nav-item")[2]);
+    return;
+  }
+
+  currentSelectedMatch = { id: matchId, fee: entryFee, maxSlots: maxSlots };
+  document.getElementById("modal-entry-fee").innerText = entryFee;
+  
+  goToWizardStep(1);
+  document.getElementById("join-modal").classList.remove("hidden");
+};
+
+window.closeJoinModal = function() {
   document.getElementById("join-modal").classList.add("hidden");
 };
 
-function showWizardStep(stepNum) {
+function goToWizardStep(stepNum) {
   document.querySelectorAll(".wizard-step").forEach(s => s.classList.remove("active"));
-  const currentStep = document.getElementById(`wizard-step-${stepNum}`);
-  if (currentStep) currentStep.classList.add("active");
+  const stepEl = document.getElementById(`wizard-step-${stepNum}`);
+  if (stepEl) stepEl.classList.add("active");
 }
 
-// Step 1: In-game Name -> Adexium Ad (Fallback: Monetag)
-window.submitStep1 = function() {
-  const val = document.getElementById("input-ff-name").value.trim();
-  if (!val) return alert("Free Fire গেম নেম অবশ্যই দিতে হবে!");
-  tempStepData.ff_name = val;
+// Step 1 Trigger -> Adexium Interstitial (Fallback Monetag)
+window.goToWizardStep = function(stepNum) {
+  if (stepNum === 2) {
+    const ign = document.getElementById("join-game-name").value.trim();
+    if (!ign) return alert("Please enter your In-Game Name!");
+    tempStepData.ff_name = ign;
 
-  // Trigger Adexium Ad
-  try {
-    if (window.AdexiumWidget) {
-      const widget = new AdexiumWidget({wid: '994b631c-6659-4975-a09b-9bb3b4eb0290', adFormat: 'interstitial'});
-      widget.autoMode();
+    // Adexium Ad Integration
+    try {
+      if (window.AdexiumWidget) {
+        const widget = new window.AdexiumWidget({wid: '994b631c-6659-4975-a09b-9bb3b4eb0290', adFormat: 'interstitial'});
+        widget.autoMode();
+      }
+    } catch (e) {
+      console.log("Adexium failed, fallback to Monetag");
     }
-  } catch (e) {
-    console.log("Adexium failed, triggering Monetag");
-  }
 
-  // Monetag Fallback
-  if (typeof window.show_10373507 === 'function') {
-    window.show_10373507().then(() => {
-      showWizardStep(2);
-    }).catch(() => showWizardStep(2));
+    // Monetag Ad Integration
+    if (typeof window.show_10373507 === 'function') {
+      window.show_10373507().then(() => showWizardStepInternal(2)).catch(() => showWizardStepInternal(2));
+    } else {
+      showWizardStepInternal(2);
+    }
   } else {
-    showWizardStep(2);
+    showWizardStepInternal(stepNum);
   }
 };
 
-// Step 2: Player UID -> Gigapub
-window.submitStep2 = function() {
-  const val = document.getElementById("input-ff-uid").value.trim();
-  if (!val) return alert("Player UID দিতে হবে!");
-  tempStepData.ff_uid = val;
+function showWizardStepInternal(stepNum) {
+  document.querySelectorAll(".wizard-step").forEach(s => s.classList.remove("active"));
+  const stepEl = document.getElementById(`wizard-step-${stepNum}`);
+  if (stepEl) stepEl.classList.add("active");
+}
 
-  // Gigapub Trigger
+// Step 2 Trigger -> Gigapub Integration
+window.confirmMatchJoin = function() {
+  const uid = document.getElementById("join-game-uid").value.trim();
+  if (!uid) return alert("Please enter your In-Game UID!");
+  tempStepData.ff_uid = uid;
+
+  // Gigapub Integration
   if (typeof window.showGiga === 'function') {
     window.showGiga()
-      .then(() => showWizardStep(3))
-      .catch(() => showWizardStep(3));
+      .then(() => triggerFinalAdsgramAndJoin())
+      .catch(() => triggerFinalAdsgramAndJoin());
   } else {
-    showWizardStep(3);
+    triggerFinalAdsgramAndJoin();
   }
 };
 
-// Step 3: Final Join Confirmation -> Adsgram Ad & Balance Deduction
-window.submitStep3Final = function() {
-  // Adsgram Ad SDK Integration (Block Id: 234313)
+// Final Confirmation -> Adsgram Ad & Firestore Transaction
+function triggerFinalAdsgramAndJoin() {
   const AdController = window.Adsgram?.init({ blockId: "234313" });
   if (AdController) {
     AdController.show().then(() => {
@@ -401,121 +527,54 @@ window.submitStep3Final = function() {
   } else {
     processTournamentRegistration();
   }
-};
+}
 
-// Firestore Transaction for Safe Registration
+// Firestore Atomic Transaction for Fair Slot Management & Deductions
 async function processTournamentRegistration() {
+  if (!currentSelectedMatch) return;
+
   const userRef = doc(db, "users", currentUser.id);
-  const matchMode = currentSelectedMode || "lone_wolf_solo";
-  const matchRef = doc(db, "tournaments", matchMode);
+  const matchRef = doc(db, "tournaments", currentSelectedMatch.id);
 
   try {
     await runTransaction(db, async (transaction) => {
       const uSnap = await transaction.get(userRef);
       const mSnap = await transaction.get(matchRef);
 
-      if (!uSnap.exists()) throw "User record missing!";
+      if (!uSnap.exists()) throw new Error("User record missing!");
+      if (!mSnap.exists()) throw new Error("Match no longer exists!");
 
       const curBal = uSnap.data().balance || 0;
-      if (curBal < 1) throw "Insufficient Balance!";
+      const matchesPlayed = uSnap.data().matchesPlayed || 0;
+      const matchData = mSnap.data();
+      const players = matchData.players || [];
+      const maxSlots = matchData.maxSlots || currentSelectedMatch.maxSlots || 48;
 
-      let players = [];
-      if (mSnap.exists()) {
-        players = mSnap.data().players || [];
-      } else {
-        transaction.set(matchRef, { players: [] });
-      }
+      if (curBal < currentSelectedMatch.fee) throw new Error("Insufficient Balance!");
+      if (players.length >= maxSlots) throw new Error("Match is already full!");
+      if (players.some(p => p.id === currentUser.id)) throw new Error("You have already joined this match!");
 
-      if (players.length >= 48) throw "Match Full!";
+      // Deduct balance and update stats
+      transaction.update(userRef, { 
+        balance: curBal - currentSelectedMatch.fee,
+        matchesPlayed: matchesPlayed + 1 
+      });
 
-      // Deduct Balance ৳1 & Add Player to Array
-      transaction.update(userRef, { balance: curBal - 1 });
-      transaction.set(matchRef, {
+      // Add player to match document
+      transaction.update(matchRef, {
         players: arrayUnion({
           id: currentUser.id,
+          name: currentUser.first_name,
           ff_name: tempStepData.ff_name,
-          ff_uid: tempStepData.ff_uid
+          ff_uid: tempStepData.ff_uid,
+          joinedAt: Date.now()
         })
-      }, { merge: true });
-    });
-
-    alert("সফলভাবে টুর্নামেন্টে জয়েন সম্পন্ন হয়েছে!");
-    closeJoinWizard();
-  } catch (err) {
-    alert("ত্রুটি: " + err);
-  }
-}
-
-// --- WITHDRAW & DEPOSIT LOGIC ---
-window.validateWithdrawBtn = function() {
-  const methodEl = document.getElementById("withdraw-method");
-  const amtEl = document.getElementById("withdraw-amount");
-  const btn = document.getElementById("btn-withdraw-submit");
-  if (!methodEl || !amtEl || !btn) return;
-
-  const method = methodEl.value;
-  const amount = parseFloat(amtEl.value) || 0;
-
-  let min = (method === 'nagad') ? 100 : 20;
-  btn.disabled = !(amount >= min && userBalance >= amount);
-};
-
-window.handleWithdrawSubmit = async function() {
-  const method = document.getElementById("withdraw-method").value;
-  const amount = parseFloat(document.getElementById("withdraw-amount").value);
-  const account = document.getElementById("withdraw-account").value.trim();
-
-  if (!account) return alert("নম্বর পূরণ করুন!");
-
-  const userRef = doc(db, "users", currentUser.id);
-  const reqRef = doc(db, "withdrawals", `${currentUser.id}_${Date.now()}`);
-
-  try {
-    await runTransaction(db, async (transaction) => {
-      const uSnap = await transaction.get(userRef);
-      const curBal = uSnap.data().balance || 0;
-      if (curBal < amount) throw "অপর্যাপ্ত ব্যালেন্স!";
-
-      transaction.update(userRef, { balance: curBal - amount });
-      transaction.set(reqRef, {
-        user_id: currentUser.id,
-        user_name: currentUser.first_name,
-        method: method,
-        amount: amount,
-        account: account,
-        status: "pending",
-        timestamp: Date.now()
       });
     });
 
-    alert("উত্তোলন রিকুয়েস্ট সফলভাবে জমা হয়েছে!");
-    document.getElementById("withdraw-amount").value = "";
-    document.getElementById("withdraw-account").value = "";
-  } catch (e) {
-    alert("ব্যর্থ হয়েছে: " + e);
+    alert("Successfully joined the tournament!");
+    closeJoinModal();
+  } catch (err) {
+    alert("Join failed: " + err.message);
   }
-};
-
-window.handleDepositSubmit = async function() {
-  const amount = parseFloat(document.getElementById("dep-amount").value);
-  const phone = document.getElementById("dep-phone").value.trim();
-  const trxi = document.getElementById("dep-trxi").value.trim();
-
-  if (!amount || !phone || !trxi) return alert("সবগুলো ঘর পূরণ করুন!");
-
-  const depRef = doc(db, "deposits", `${currentUser.id}_${Date.now()}`);
-  await setDoc(depRef, {
-    user_id: currentUser.id,
-    user_name: currentUser.first_name,
-    amount: amount,
-    phone: phone,
-    trx_id: trxi,
-    status: "pending",
-    timestamp: Date.now()
-  });
-
-  alert("ডিপোজিট রিকুয়েস্ট সফলভাবে পাঠানো হয়েছে। এডমিন যাচাই করে ব্যালেন্স যোগ করবে।");
-  document.getElementById("dep-amount").value = "";
-  document.getElementById("dep-phone").value = "";
-  document.getElementById("dep-trxi").value = "";
-};
+    }

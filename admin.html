@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Esports Admin Panel</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <!-- LOGIN OVERLAY -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-box">
+      <h2><i class="fa-solid fa-user-shield"></i> Admin Login</h2>
+      <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 15px;">শুধুমাত্র সুনির্দিষ্ট এডমিন আইডি অনুমতি পাবে</p>
+      <div class="form-group">
+        <input type="email" id="admin-email" class="input-field" placeholder="Admin Email">
+      </div>
+      <div class="form-group">
+        <input type="password" id="admin-pass" class="input-field" placeholder="Password">
+      </div>
+      <button class="btn-submit" onclick="handleAdminLogin()">Login to Panel</button>
+    </div>
+  </div>
+
+  <!-- ADMIN MAIN PANEL -->
+  <div id="admin-panel" class="hidden">
+    
+    <!-- HEADER -->
+    <header class="admin-header">
+      <h2><i class="fa-solid fa-headset"></i> Control Panel</h2>
+      <button class="btn-logout" onclick="handleAdminLogout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+    </header>
+
+    <!-- TABS NAVIGATION -->
+    <nav class="admin-tabs">
+      <button class="tab-btn active" onclick="switchTab('matches', this)"><i class="fa-solid fa-gamepad"></i> Matches</button>
+      <button class="tab-btn" onclick="switchTab('live', this)"><i class="fa-solid fa-tower-broadcast"></i> Live Room</button>
+      <button class="tab-btn" onclick="switchTab('deposits', this)"><i class="fa-solid fa-arrow-down-to-line"></i> Deposits</button>
+      <button class="tab-btn" onclick="switchTab('withdrawals', this)"><i class="fa-solid fa-arrow-up-from-line"></i> Withdrawals</button>
+      <button class="tab-btn" onclick="switchTab('users', this)"><i class="fa-solid fa-users"></i> Users</button>
+    </nav>
+
+    <main class="admin-content">
+
+      <!-- TAB 1: MATCHES MANAGEMENT -->
+      <section id="tab-matches" class="tab-content active">
+        <div class="card">
+          <h3><i class="fa-solid fa-plus-circle"></i> Create New Match</h3>
+          <div class="form-group">
+            <label>Match Title</label>
+            <input type="text" id="match-title" class="input-field" placeholder="e.g. Daily Match #12">
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Category</label>
+              <select id="match-category" class="input-field">
+                <option value="lone_wolf_1v1">Lone Wolf Solo (1V1)</option>
+                <option value="lone_wolf_2v2">Lone Wolf Duo (2V2)</option>
+                <option value="clash_squad_4v4">Clash Squad (4V4)</option>
+                <option value="br_solo">Battle Royale Solo</option>
+                <option value="br_duo">Battle Royale Duo</option>
+                <option value="br_squad">Battle Royale Squad</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Match Time</label>
+              <input type="text" id="match-time" class="input-field" placeholder="e.g. Today 8:00 PM">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Entry Fee (৳)</label>
+              <input type="number" id="match-entry" class="input-field" placeholder="e.g. 50">
+            </div>
+            <div class="form-group">
+              <label>Total Prize (৳)</label>
+              <input type="number" id="match-prize" class="input-field" placeholder="e.g. 100">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Max Slots (Players)</label>
+            <input type="number" id="match-slots" class="input-field" placeholder="e.g. 48" value="48">
+          </div>
+          <button class="btn-submit" onclick="createNewMatch()">Publish Match</button>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-list"></i> Active Tournaments List</h3>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Category</th>
+                  <th>Fee</th>
+                  <th>Joined</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="admin-matches-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: LIVE MATCH ROOM MANAGEMENT -->
+      <section id="tab-live" class="tab-content">
+        <div class="card">
+          <h3><i class="fa-solid fa-key"></i> Add Live Room Details & Send Bot Alert</h3>
+          <div class="form-group">
+            <label>Select Tournament Match</label>
+            <select id="live-match-select" class="input-field">
+              <option value="">-- Select Match --</option>
+            </select>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Room ID</label>
+              <input type="text" id="live-room-id" class="input-field" placeholder="e.g. 8493021">
+            </div>
+            <div class="form-group">
+              <label>Room Password</label>
+              <input type="text" id="live-room-pass" class="input-field" placeholder="e.g. 1234">
+            </div>
+          </div>
+          <button class="btn-submit" onclick="publishLiveMatch()">Publish Room & Send Telegram Message</button>
+        </div>
+
+        <div class="card">
+          <h3>Active Live Rooms</h3>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Room ID</th>
+                  <th>Password</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="admin-live-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: DEPOSITS MANAGEMENT -->
+      <section id="tab-deposits" class="tab-content">
+        <div class="card">
+          <h3><i class="fa-solid fa-money-bill-wave"></i> Pending Deposit Requests</h3>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Amount</th>
+                  <th>TrxID</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="admin-deposits-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: WITHDRAWALS MANAGEMENT -->
+      <section id="tab-withdrawals" class="tab-content">
+        <div class="card">
+          <h3><i class="fa-solid fa-hand-holding-dollar"></i> Pending Withdrawal Requests</h3>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Method / Account</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="admin-withdrawals-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: USERS MANAGEMENT -->
+      <section id="tab-users" class="tab-content">
+        <div class="card">
+          <h3><i class="fa-solid fa-users-gear"></i> All Registered Users</h3>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>User ID / Name</th>
+                  <th>Balance (৳)</th>
+                  <th>Played</th>
+                  <th>Wins</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="admin-users-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script type="module" src="admin.js"></script>
+</body>
+</html>

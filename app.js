@@ -31,6 +31,12 @@ let currentSelectedMode = "";
 let currentSelectedMatch = null;
 let tempStepData = { ff_name: "", ff_uid: "" };
 let activeMatchUnsubscribe = null;
+let startParam = "";
+
+// BOT USERNAME (আপনার টেলিগ্রাম বটের ইউজারনেম এখানে দিন)
+const BOT_USERNAME = "YourBotUsername_bot"; 
+
+const tg = window.Telegram?.WebApp;
 
 // MULTI-LANGUAGE TRANSLATION DICTIONARY
 const TRANSLATIONS = {
@@ -38,12 +44,6 @@ const TRANSLATIONS = {
     last_winner: "সর্বশেষ বিজয়ী",
     no_winner_yet: "এখনো কোনো ফলাফল প্রকাশ হয়নি",
     select_category: "টুর্নামেন্ট ক্যাটাগরি সিলেক্ট করুন",
-    max_2_players: "সর্বোচ্চ ২ জন প্লেয়ার",
-    max_4_players: "সর্বোচ্চ ৪ জন প্লেয়ার (2v2)",
-    max_8_players: "সর্বোচ্চ ৮ জন প্লেয়ার (4v4)",
-    max_48_players: "সর্বোচ্চ ৪৮ জন প্লেয়ার",
-    max_48_duo: "সর্বোচ্চ ৪৮ জন (Duo)",
-    max_48_squad: "সর্বোচ্চ ৪৮ জন (Squad)",
     back_to_categories: "ক্যাটাগরিতে ফিরে যান",
     live_matches: "লাইভ রুম আইডি ও পাসওয়ার্ড",
     current_balance: "বর্তমান একাউন্ট ব্যালেন্স",
@@ -77,12 +77,6 @@ const TRANSLATIONS = {
     last_winner: "Last Winner",
     no_winner_yet: "No results published yet",
     select_category: "Select Tournament Category",
-    max_2_players: "Max 2 Players",
-    max_4_players: "Max 4 Players (2v2)",
-    max_8_players: "Max 8 Players (4v4)",
-    max_48_players: "Max 48 Players",
-    max_48_duo: "Max 48 Players (Duo)",
-    max_48_squad: "Max 48 Players (Squad)",
     back_to_categories: "Back to Categories",
     live_matches: "Live Room ID & Password",
     current_balance: "Current Account Balance",
@@ -128,18 +122,22 @@ const MODE_CONFIGS = {
 
 // --- INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
-  // Telegram WebApp Integration
-  const tg = window.Telegram?.WebApp;
   if (tg) {
     tg.ready();
     tg.expand();
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-      const u = tg.initDataUnsafe.user;
-      currentUser.id = u.id.toString();
-      currentUser.first_name = u.first_name || "Player";
-      currentUser.username = u.username ? `@${u.username}` : "@player";
-      if (u.photo_url) currentUser.photo_url = u.photo_url;
+    if (tg.initDataUnsafe) {
+      if (tg.initDataUnsafe.user) {
+        const u = tg.initDataUnsafe.user;
+        currentUser.id = u.id.toString();
+        currentUser.first_name = u.first_name || "Player";
+        currentUser.username = u.username ? `@${u.username}` : "@player";
+        if (u.photo_url) currentUser.photo_url = u.photo_url;
+      }
+      if (tg.initDataUnsafe.start_param) {
+        startParam = tg.initDataUnsafe.start_param; // e.g. "ref_12345678"
+      }
     }
+    setupTelegramBackButton();
   }
 
   // Load Saved Language
@@ -152,6 +150,20 @@ document.addEventListener("DOMContentLoaded", () => {
   listenLiveMatches();
   listenTransactionHistory();
 });
+
+// TELEGRAM NATIVE BACK BUTTON SETUP
+function setupTelegramBackButton() {
+  if (!tg || !tg.BackButton) return;
+
+  tg.BackButton.onClick(() => {
+    const matchesView = document.getElementById("matches-list-view");
+    if (matchesView && !matchesView.classList.contains("hidden")) {
+      backToCategories();
+    } else {
+      navigateTo('home');
+    }
+  });
+}
 
 // LANGUAGE SWITCHER SYSTEM
 window.changeLanguage = function(lang) {
@@ -196,32 +208,87 @@ window.navigateTo = function(pageId, element) {
   const targetPage = document.getElementById(`page-${pageId}`);
   if (targetPage) targetPage.classList.add("active");
   if (element) element.classList.add("active");
+
+  if (tg && tg.BackButton) {
+    if (pageId === 'home') {
+      tg.BackButton.hide();
+    } else {
+      tg.BackButton.show();
+    }
+  }
 };
 
-// --- FIRESTORE REALTIME USER ACCOUNT ---
+// --- FIRESTORE REALTIME USER ACCOUNT & REFERRAL BONUS ---
 function initUserAccount() {
   const userRef = doc(db, "users", currentUser.id);
-  onSnapshot(userRef, (snap) => {
+  onSnapshot(userRef, async (snap) => {
     if (snap.exists()) {
       const data = snap.data();
       userBalance = data.balance || 0;
       
       const playedEl = document.getElementById("stat-played");
       const winsEl = document.getElementById("stat-wins");
+      const refCountEl = document.getElementById("stat-referrals");
+      const refLinkInput = document.getElementById("referral-link-input");
+
       if (playedEl) playedEl.innerText = data.matchesPlayed || 0;
       if (winsEl) winsEl.innerText = data.wins || 0;
+      if (refCountEl) refCountEl.innerText = data.referralsCount || 0;
+      if (refLinkInput) refLinkInput.value = `https://t.me/${BOT_USERNAME}?start=ref_${currentUser.id}`;
     } else {
-      setDoc(userRef, {
+      // নতুন ইউজার অ্যাকাউন্ট তৈরি এবং রেফারেল চেক
+      let initialBalance = 0;
+      let referredBy = null;
+
+      if (startParam) {
+        const refId = startParam.replace("ref_", "").trim();
+        if (refId && refId !== currentUser.id) {
+          referredBy = refId;
+          initialBalance = 1; // নতুন ইউজার ১ টাকা বোনাস পাবে
+        }
+      }
+
+      await setDoc(userRef, {
         name: currentUser.first_name,
         username: currentUser.username,
-        balance: 0,
+        balance: initialBalance,
         matchesPlayed: 0,
-        wins: 0
+        wins: 0,
+        referredBy: referredBy,
+        referralsCount: 0,
+        createdAt: Date.now()
       });
-      userBalance = 0;
+
+      userBalance = initialBalance;
+
+      // যে রেফার করেছে তাকে ২ টাকা বোনাস দেওয়া
+      if (referredBy) {
+        rewardReferrer(referredBy);
+      }
     }
     updateBalanceDisplays();
   });
+}
+
+// রেফারারকে ২ টাকা রিওয়ার্ড দেওয়ার ট্রানজেকশন
+async function rewardReferrer(referrerId) {
+  const referrerRef = doc(db, "users", referrerId);
+  try {
+    await runTransaction(db, async (transaction) => {
+      const refSnap = await transaction.get(referrerRef);
+      if (refSnap.exists()) {
+        const refData = refSnap.data();
+        const curBal = refData.balance || 0;
+        const curRefs = refData.referralsCount || 0;
+        transaction.update(referrerRef, {
+          balance: curBal + 2, // রেফারার ২ টাকা পাবে
+          referralsCount: curRefs + 1
+        });
+      }
+    });
+  } catch (e) {
+    console.error("Referral bonus error:", e);
+  }
 }
 
 function updateBalanceDisplays() {
@@ -235,7 +302,7 @@ function updateBalanceDisplays() {
   if (wBal) wBal.innerText = formattedBal;
 }
 
-// --- CATEGORY MATCHES & FIRESTORE LISTENERS (FIXED VISIBILITY) ---
+// --- CATEGORY MATCHES LISTENERS (RELIABLE MATCH DISPLAY FIX) ---
 window.openCategoryMatches = function(categoryKey) {
   currentSelectedMode = categoryKey;
   const grid = document.getElementById("category-list-view");
@@ -248,6 +315,8 @@ window.openCategoryMatches = function(categoryKey) {
   const titleEl = document.getElementById("selected-category-title");
   if (titleEl) titleEl.innerText = config.title;
 
+  if (tg && tg.BackButton) tg.BackButton.show();
+
   listenCategoryMatches(categoryKey);
 };
 
@@ -259,31 +328,34 @@ window.backToCategories = function() {
 
   if (matchesView) matchesView.classList.add("hidden");
   if (grid) grid.classList.remove("hidden");
+
+  if (tg && tg.BackButton) tg.BackButton.hide();
 };
 
-// এডমিন থেকে দেওয়া ম্যাচ সরাসরি দেখানোর জন্য ফিক্সড ক্যোয়ারি
+// ম্যাচ লোডিং ফিক্স (কোনো ম্যাচ মিস হবে না)
 function listenCategoryMatches(categoryKey) {
   if (activeMatchUnsubscribe) activeMatchUnsubscribe();
 
   const container = document.getElementById("active-matches-container");
+  if (!container) return;
+
+  container.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-sub);">ম্যাচ লোড হচ্ছে...</div>`;
+
   const config = MODE_CONFIGS[categoryKey] || { maxSlots: 48 };
 
-  // Firestore Composite Index এরর এড়াতে শুধু ক্যাটাগরি ফিল্টার করে পরে ফিল্টারিং করা হয়েছে
-  const q = query(
-    collection(db, "tournaments"), 
-    where("category", "==", categoryKey)
-  );
+  // সব 'tournaments' কালেকশন থেকে রিয়েলটাইম ডাটা আনবে যাতে ইনডেক্সিং বা ফিল্টারিং এরর না হয়
+  const q = collection(db, "tournaments");
 
   activeMatchUnsubscribe = onSnapshot(q, (snapshot) => {
-    if (!container) return;
     container.innerHTML = "";
-
     let hasActiveMatches = false;
 
     snapshot.forEach((docSnap) => {
       const match = { id: docSnap.id, ...docSnap.data() };
 
-      // শুধুমাত্র active ম্যাচ ফিল্টার
+      // ক্যাটাগরি এবং একটিভ স্ট্যাটাস নিখুঁতভাবে চেক
+      const matchCategory = (match.category || "").trim();
+      if (matchCategory !== categoryKey) return;
       if (match.status && match.status !== "active") return;
 
       hasActiveMatches = true;
@@ -334,11 +406,12 @@ function listenCategoryMatches(categoryKey) {
     });
 
     if (!hasActiveMatches) {
-      const noMatchText = TRANSLATIONS[currentLang]?.no_matches_found || "No active matches.";
-      container.innerHTML = `<div class="empty-matches-msg" style="text-align:center; padding: 20px; color: var(--text-sub);">${noMatchText}</div>`;
+      const noMatchText = TRANSLATIONS[currentLang]?.no_matches_found || "এই ক্যাটাগরিতে বর্তমানে কোনো ম্যাচ চালু নেই।";
+      container.innerHTML = `<div class="empty-matches-msg" style="text-align:center; padding: 30px; color: var(--text-sub);">${noMatchText}</div>`;
     }
   }, (error) => {
     console.error("Error fetching matches:", error);
+    container.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--accent-color);">ম্যাচ ডাটা লোড করতে সমস্যা হয়েছে!</div>`;
   });
 }
 
@@ -377,7 +450,7 @@ function listenLiveMatches() {
   });
 }
 
-// --- WALLET: DEPOSIT, WITHDRAW & HISTORY ---
+// --- WALLET & HISTORY ---
 window.switchWalletTab = function(tabName, evt) {
   document.querySelectorAll(".wallet-tab-btn").forEach(btn => btn.classList.remove("active"));
   document.querySelectorAll(".wallet-tab-content").forEach(content => content.classList.remove("active"));
@@ -389,7 +462,6 @@ window.switchWalletTab = function(tabName, evt) {
   if (tabEl) tabEl.classList.add("active");
 };
 
-// আপডেটেড বিকাশ ও নগদ নাম্বার সেটআপ
 window.selectDepMethod = function(method, btn) {
   document.querySelectorAll(".dep-tab-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
@@ -409,7 +481,8 @@ window.selectDepMethod = function(method, btn) {
 window.copyNumber = function(elementId) {
   const el = document.getElementById(elementId);
   if (el) {
-    navigator.clipboard.writeText(el.innerText);
+    const textToCopy = el.value || el.innerText;
+    navigator.clipboard.writeText(textToCopy);
     alert("কপি করা হয়েছে!");
   }
 };
@@ -418,12 +491,8 @@ window.submitDeposit = async function() {
   const amount = parseFloat(document.getElementById("dep-amount").value);
   const trxid = document.getElementById("dep-trxid").value.trim();
 
-  if (!amount || amount < 50) {
-    return alert("সর্বনিম্ন ডিপোজিট পরিমাণ ৳৫০");
-  }
-  if (!trxid) {
-    return alert("Transaction ID (TrxID) দিন!");
-  }
+  if (!amount || amount < 50) return alert("সর্বনিম্ন ডিপোজিট পরিমাণ ৳৫০");
+  if (!trxid) return alert("Transaction ID (TrxID) দিন!");
 
   try {
     const depRef = doc(db, "deposits", `${currentUser.id}_${Date.now()}`);
@@ -485,7 +554,6 @@ window.submitWithdraw = async function() {
   }
 };
 
-// Transaction History Listener
 function listenTransactionHistory() {
   const container = document.getElementById("history-list-container");
 
@@ -573,7 +641,6 @@ window.goToWizardStep = function(stepNum) {
     if (!ign) return alert("Free Fire In-Game Name দিন!");
     tempStepData.ff_name = ign;
 
-    // Adexium & Monetag Ad Trigger
     try {
       if (window.AdexiumWidget) {
         const widget = new window.AdexiumWidget({wid: '994b631c-6659-4975-a09b-9bb3b4eb0290', adFormat: 'interstitial'});
@@ -618,7 +685,6 @@ function triggerFinalAdsgramAndJoin() {
   }
 }
 
-// Atomic Firestore Transaction for Registration
 async function processTournamentRegistration() {
   if (!currentSelectedMatch) return;
 
@@ -664,4 +730,4 @@ async function processTournamentRegistration() {
   } catch (err) {
     alert("জয়েন হতে সমস্যা হয়েছে: " + err.message);
   }
-      }
+    }

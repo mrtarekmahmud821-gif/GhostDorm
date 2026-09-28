@@ -42,12 +42,19 @@ const tg = window.Telegram?.WebApp;
 // MULTI-LANGUAGE TRANSLATION DICTIONARY
 const TRANSLATIONS = {
   en: {
-    last_winner: "Last Winner",
+    last_winner: "Latest Winner",
     no_winner_yet: "No results published yet",
     select_category: "Select Tournament Category",
+    max_2_players: "Max 2 Players",
+    max_4_players: "Max 4 Players (2v2)",
+    max_8_players: "Max 8 Players (4v4)",
+    max_48_players: "Max 48 Players",
+    max_48_duo: "Max 48 Players (Duo)",
+    max_48_squad: "Max 48 Players (Squad)",
     back_to_categories: "Back to Categories",
     live_matches: "Live Room ID & Password",
-    current_balance: "Account Balance: ",
+    current_balance: "Current Account Balance",
+    current_balance_lbl: "Account Balance: ",
     deposit: "Deposit",
     withdraw: "Withdraw",
     history: "History",
@@ -100,9 +107,16 @@ const TRANSLATIONS = {
     last_winner: "সর্বশেষ বিজয়ী",
     no_winner_yet: "এখনো কোনো ফলাফল প্রকাশ হয়নি",
     select_category: "টুর্নামেন্ট ক্যাটাগরি সিলেক্ট করুন",
+    max_2_players: "সর্বোচ্চ ২ জন প্লেয়ার",
+    max_4_players: "সর্বোচ্চ ৪ জন প্লেয়ার (2v2)",
+    max_8_players: "সর্বোচ্চ ৮ জন প্লেয়ার (4v4)",
+    max_48_players: "সর্বোচ্চ ৪৮ জন প্লেয়ার",
+    max_48_duo: "সর্বোচ্চ ৪৮ জন (Duo)",
+    max_48_squad: "সর্বোচ্চ ৪৮ জন (Squad)",
     back_to_categories: "ক্যাটাগরিতে ফিরে যান",
     live_matches: "লাইভ রুম আইডি ও পাসওয়ার্ড",
-    current_balance: "অ্যাকাউন্ট ব্যালেন্স: ",
+    current_balance: "বর্তমান একাউন্ট ব্যালেন্স",
+    current_balance_lbl: "অ্যাকাউন্ট ব্যালেন্স: ",
     deposit: "ডিপোজিট",
     withdraw: "উইথড্র",
     history: "হিসাব",
@@ -173,7 +187,6 @@ document.addEventListener("DOMContentLoaded", () => {
     tg.expand();
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
       const u = tg.initDataUnsafe.user;
-      // টেলিগ্রাম আইডি ও ইউনিক সাফিক্স তৈরি (নিরাপদ আইডেন্টিফায়ার)
       currentUser.raw_id = u.id.toString();
       currentUser.id = `TG_${u.id}`; 
       currentUser.first_name = u.first_name || "Player";
@@ -246,10 +259,10 @@ function applyLanguage(lang) {
     listenCategoryMatches(currentSelectedMode);
   }
   listenLiveMatches();
+  listenTransactionHistory();
 }
 
 function fixWalletInputSpacing() {
-  // ওয়ালেট পেজের ইনপুট ফিল্ডগুলোতে ফাঁকা জায়গা তৈরি (Spacing Fix)
   const inputs = document.querySelectorAll("#dep-amount, #dep-trxid, #withdraw-number, #withdraw-amount");
   inputs.forEach(input => {
     input.style.marginBottom = "12px";
@@ -273,7 +286,6 @@ function renderHeaderProfile() {
 
   if (profAvatar) profAvatar.src = currentUser.photo_url;
   if (profName) profName.innerText = currentUser.first_name;
-  // ইউজার আইডি কপি করার সুবিধার্থে ইউজারনেমের সাথে আইডি
   if (profId) profId.innerText = `${currentUser.username} (${currentUser.id})`;
 }
 
@@ -601,7 +613,6 @@ window.submitDeposit = async function() {
     return alert(dict.min_dep_alert);
   }
 
-  // বিকাশ ও নগদ TrxID ভ্যালিডেশন (৮-১২ অক্ষরের আলফানিউমেরিক)
   const trxRegex = /^[A-Z0-9]{8,12}$/;
 
   if (!trxid || !trxRegex.test(trxid) || /^(.)\1+$/.test(trxid) || trxid.includes("TEST")) {
@@ -613,7 +624,7 @@ window.submitDeposit = async function() {
     const depRef = doc(db, "deposits", depDocId);
 
     await setDoc(depRef, {
-      user_id: currentUser.id, // pure Telegram ID identifier
+      user_id: currentUser.id,
       telegram_id: currentUser.raw_id,
       user_name: currentUser.first_name,
       amount: amount,
@@ -851,4 +862,4 @@ async function processTournamentRegistration() {
   } catch (err) {
     alert("Failed to join match: " + err.message);
   }
-}
+      }

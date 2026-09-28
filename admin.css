@@ -164,12 +164,6 @@ body {
   gap: 10px;
 }
 
-.grid-3 {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px;
-}
-
 /* Buttons */
 .btn-submit {
   width: 100%;
@@ -232,40 +226,28 @@ th {
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(4px);
-  z-index: 2000;
+  background: rgba(0,0,0,0.8);
+  z-index: 1000;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 15px;
 }
 
-.modal-card {
+.modal-box {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
+  padding: 20px;
   border-radius: 12px;
   width: 100%;
-  max-width: 420px;
-  padding: 20px;
-  position: relative;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  max-width: 450px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
-.modal-card h3 {
+.modal-box h3 {
   color: var(--gold-color);
   margin-bottom: 12px;
-  font-size: 16px;
-}
-
-.modal-close {
-  position: absolute;
-  top: 12px; right: 15px;
-  background: none;
-  border: none;
-  color: var(--text-sub);
-  font-size: 22px;
-  cursor: pointer;
 }
 
 .hidden { display: none !important; }

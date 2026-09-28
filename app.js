@@ -20,7 +20,8 @@ const db = getFirestore(app);
 
 // Application State
 let currentUser = {
-  id: "guest_user",
+  id: "TG_guest_user",
+  raw_id: "guest_user",
   first_name: "Player",
   username: "@player",
   photo_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmZ3dl2NZJPLDStjwXI8wbVfPMFeGzGVrr5YLxhk8MUtqCpxb1bOfE4_Y&s=10"
@@ -40,41 +41,6 @@ const tg = window.Telegram?.WebApp;
 
 // MULTI-LANGUAGE TRANSLATION DICTIONARY
 const TRANSLATIONS = {
-  bn: {
-    last_winner: "সর্বশেষ বিজয়ী",
-    no_winner_yet: "এখনো কোনো ফলাফল প্রকাশ হয়নি",
-    select_category: "টুর্নামেন্ট ক্যাটাগরি সিলেক্ট করুন",
-    back_to_categories: "ক্যাটাগরিতে ফিরে যান",
-    live_matches: "লাইভ রুম আইডি ও পাসওয়ার্ড",
-    current_balance: "অ্যাকাউন্ট ব্যালেন্স: ",
-    deposit: "ডিপোজিট",
-    withdraw: "উইথড্র",
-    history: "হিসাব",
-    deposit_money: "টাকা ডিপোজিট করুন",
-    copy: "কপি",
-    submit_deposit: "ডিপোজিট রিকোয়েস্ট পাঠান",
-    withdraw_winnings: "টাকা উত্তোলন করুন",
-    withdraw_time_note: "উইথড্র রিকোয়েস্ট ১-১২ ঘণ্টার মধ্যে প্রসেস করা হয়।",
-    submit_withdraw: "উইথড্র রিকোয়েস্ট পাঠান",
-    transaction_history: "লেনদেনের ইতিহাস",
-    account_overview: "অ্যাকাউন্ট সামারি",
-    matches_played: "মোট খেলেছেন",
-    total_wins: "মোট জয়",
-    total_referrals: "মোট রেফারেল (প্রতি রেফারে ৳২)",
-    referral_link_label: "আপনার রেফারেল লিংক (বন্ধুকে দিয়ে রেফার করুন ও টাকা জিতুন):",
-    join_tournament: "টুর্নামেন্টে জয়েন করুন",
-    enter_ff_details: "আপনার সঠিক Free Fire গেম তথ্য লিখুন:",
-    next_step: "পরবর্তী ধাপ",
-    confirm_entry: "এন্ট্রি ফি নিশ্চিত করুন",
-    fee_deduct_note: "এন্ট্রি ফি আপনার ব্যালেন্স থেকে কেটে নেওয়া হবে।",
-    match_entry_fee: "ম্যাচ এন্ট্রি ফি:",
-    confirm_pay: "কনফার্ম ও জয়েন করুন",
-    nav_home: "হোম",
-    nav_live: "লাইভ",
-    nav_wallet: "ওয়ালেট",
-    nav_profile: "প্রোফাইল",
-    no_matches_found: "এই ক্যাটাগরিতে বর্তমানে কোনো ম্যাচ চালু নেই।"
-  },
   en: {
     last_winner: "Last Winner",
     no_winner_yet: "No results published yet",
@@ -108,11 +74,87 @@ const TRANSLATIONS = {
     nav_live: "Live",
     nav_wallet: "Wallet",
     nav_profile: "Profile",
-    no_matches_found: "No active matches available for this category."
+    no_matches_found: "No active matches available for this category.",
+    bkash_instruction: "Make Payment to bKash Merchant Number:",
+    nagad_instruction: "Send Money to Nagad Personal Number:",
+    dep_amount_ph: "Deposit Amount (Min ৳50)",
+    trxid_ph: "Enter Transaction ID (TrxID)",
+    withdraw_num_ph: "Enter Account Number",
+    withdraw_amt_ph: "Withdraw Amount (Min ৳100)",
+    loading_matches: "Loading matches...",
+    no_live_msg: "No live room IDs available for your joined matches yet.",
+    room_pending_msg: "⏳ Room ID & Password will be provided 10 minutes before the match starts.",
+    copied_msg: "Copied to clipboard!",
+    dep_success_msg: "Deposit request submitted successfully!\nIt will be verified and credited within 30 minutes.",
+    min_dep_alert: "Minimum deposit amount is ৳50",
+    invalid_trx_alert: "Please enter a valid Transaction ID (e.g., 9J87X6Y5Z4)!\nFake or demo IDs are not allowed.",
+    total_prize: "Total Prize",
+    entry_fee: "Entry Fee",
+    slots_joined: "Slots Joined",
+    btn_joined: "Joined",
+    btn_full: "Match Full",
+    btn_join: "Join Match",
+    no_history: "No transaction history found."
+  },
+  bn: {
+    last_winner: "সর্বশেষ বিজয়ী",
+    no_winner_yet: "এখনো কোনো ফলাফল প্রকাশ হয়নি",
+    select_category: "টুর্নামেন্ট ক্যাটাগরি সিলেক্ট করুন",
+    back_to_categories: "ক্যাটাগরিতে ফিরে যান",
+    live_matches: "লাইভ রুম আইডি ও পাসওয়ার্ড",
+    current_balance: "অ্যাকাউন্ট ব্যালেন্স: ",
+    deposit: "ডিপোজিট",
+    withdraw: "উইথড্র",
+    history: "হিসাব",
+    deposit_money: "টাকা ডিপোজিট করুন",
+    copy: "কপি",
+    submit_deposit: "ডিপোজিট রিকোয়েস্ট পাঠান",
+    withdraw_winnings: "টাকা উত্তোলন করুন",
+    withdraw_time_note: "উইথড্র রিকোয়েস্ট ১-১২ ঘণ্টার মধ্যে প্রসেস করা হয়।",
+    submit_withdraw: "উইথড্র রিকোয়েস্ট পাঠান",
+    transaction_history: "লেনদেনের ইতিহাস",
+    account_overview: "অ্যাকাউন্ট সামারি",
+    matches_played: "মোট খেলেছেন",
+    total_wins: "মোট জয়",
+    total_referrals: "মোট রেফারেল (প্রতি রেফারে ৳২)",
+    referral_link_label: "আপনার রেফারেল লিংক (বন্ধুকে দিয়ে রেফার করুন ও টাকা জিতুন):",
+    join_tournament: "টুর্নামেন্টে জয়েন করুন",
+    enter_ff_details: "আপনার সঠিক Free Fire গেম তথ্য লিখুন:",
+    next_step: "পরবর্তী ধাপ",
+    confirm_entry: "এন্ট্রি ফি নিশ্চিত করুন",
+    fee_deduct_note: "এন্ট্রি ফি আপনার ব্যালেন্স থেকে কেটে নেওয়া হবে।",
+    match_entry_fee: "ম্যাচ এন্ট্রি ফি:",
+    confirm_pay: "কনফার্ম ও জয়েন করুন",
+    nav_home: "হোম",
+    nav_live: "লাইভ",
+    nav_wallet: "ওয়ালেট",
+    nav_profile: "প্রোফাইল",
+    no_matches_found: "এই ক্যাটাগরিতে বর্তমানে কোনো ম্যাচ চালু নেই।",
+    bkash_instruction: "bKash মার্চেন্ট নাম্বারে (Make Payment) করুন:",
+    nagad_instruction: "নগদ পার্সোনাল নাম্বারে (Send Money) করুন:",
+    dep_amount_ph: "ডিপোজিট পরিমাণ (সর্বনিম্ন ৳৫০)",
+    trxid_ph: "Transaction ID (TrxID) দিন",
+    withdraw_num_ph: "একাউন্ট নম্বর লিখুন",
+    withdraw_amt_ph: "উইথড্র পরিমাণ (সর্বনিম্ন ৳১০০)",
+    loading_matches: "ম্যাচ লোড হচ্ছে...",
+    no_live_msg: "আপনার জয়েন করা কোনো ম্যাচের রুম আইডি এখনো প্রকাশ করা হয়নি।",
+    room_pending_msg: "⏳ রুম আইডি ও পাসওয়ার্ড খেলা শুরুর ১০ মিনিট আগে এখানে দেওয়া হবে।",
+    copied_msg: "কপি করা হয়েছে!",
+    dep_success_msg: "ডিপোজিট রিকোয়েস্ট সফলভাবে জমা নেওয়া হয়েছে!\n৩০ মিনিটের মধ্যে ভেরিফাই করে একাউন্টে টাকা যোগ করে দেওয়া হবে।",
+    min_dep_alert: "সর্বনিম্ন ডিপোজিট পরিমাণ ৳৫০",
+    invalid_trx_alert: "সঠিক Transaction ID দিন! (যেমন: 9J87X6Y5Z4)\nকোনো ভুয়া বা ডেমো TrxID গ্রহণযোগ্য নয়।",
+    total_prize: "মোট প্রাইজ",
+    entry_fee: "এন্ট্রি ফি",
+    slots_joined: "প্লেয়ার জয়েন",
+    btn_joined: "জয়েন করা হয়েছে",
+    btn_full: "ম্যাচ ফুল",
+    btn_join: "জয়েন করুন",
+    no_history: "কোনো লেনদেনের ইতিহাস পাওয়া যায়নি।"
   }
 };
 
-let currentLang = localStorage.getItem("user_language") || "bn";
+// Default Language is ENGLISH (en)
+let currentLang = localStorage.getItem("user_language") || "en";
 
 // Category Configurations
 const MODE_CONFIGS = {
@@ -129,22 +171,22 @@ document.addEventListener("DOMContentLoaded", () => {
   if (tg) {
     tg.ready();
     tg.expand();
-    if (tg.initDataUnsafe) {
-      if (tg.initDataUnsafe.user) {
-        const u = tg.initDataUnsafe.user;
-        currentUser.id = u.id.toString();
-        currentUser.first_name = u.first_name || "Player";
-        currentUser.username = u.username ? `@${u.username}` : "@player";
-        if (u.photo_url) currentUser.photo_url = u.photo_url;
-      }
-      if (tg.initDataUnsafe.start_param) {
-        startParam = tg.initDataUnsafe.start_param;
-      }
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+      const u = tg.initDataUnsafe.user;
+      // টেলিগ্রাম আইডি ও ইউনিক সাফিক্স তৈরি (নিরাপদ আইডেন্টিফায়ার)
+      currentUser.raw_id = u.id.toString();
+      currentUser.id = `TG_${u.id}`; 
+      currentUser.first_name = u.first_name || "Player";
+      currentUser.username = u.username ? `@${u.username}` : `@user_${u.id}`;
+      if (u.photo_url) currentUser.photo_url = u.photo_url;
+    }
+    if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+      startParam = tg.initDataUnsafe.start_param;
     }
     setupTelegramBackButton();
   }
 
-  // Load Saved Language
+  // Load Saved Language (Default EN)
   const langSelect = document.getElementById("language-selector");
   if (langSelect) langSelect.value = currentLang;
   applyLanguage(currentLang);
@@ -153,6 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initUserAccount();
   listenLiveMatches();
   listenTransactionHistory();
+  fixWalletInputSpacing();
 });
 
 // TELEGRAM NATIVE BACK BUTTON SETUP
@@ -177,12 +220,41 @@ window.changeLanguage = function(lang) {
 };
 
 function applyLanguage(lang) {
-  const dict = TRANSLATIONS[lang] || TRANSLATIONS.bn;
+  const dict = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  
+  // Text Content Translation
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.getAttribute("data-i18n");
     if (dict[key]) {
       el.innerText = dict[key];
     }
+  });
+
+  // Placeholder Translation
+  const depAmt = document.getElementById("dep-amount");
+  const depTrx = document.getElementById("dep-trxid");
+  const wNum = document.getElementById("withdraw-number");
+  const wAmt = document.getElementById("withdraw-amount");
+
+  if (depAmt) depAmt.placeholder = dict.dep_amount_ph;
+  if (depTrx) depTrx.placeholder = dict.trxid_ph;
+  if (wNum) wNum.placeholder = dict.withdraw_num_ph;
+  if (wAmt) wAmt.placeholder = dict.withdraw_amt_ph;
+
+  // Active view updates
+  if (currentSelectedMode) {
+    listenCategoryMatches(currentSelectedMode);
+  }
+  listenLiveMatches();
+}
+
+function fixWalletInputSpacing() {
+  // ওয়ালেট পেজের ইনপুট ফিল্ডগুলোতে ফাঁকা জায়গা তৈরি (Spacing Fix)
+  const inputs = document.querySelectorAll("#dep-amount, #dep-trxid, #withdraw-number, #withdraw-amount");
+  inputs.forEach(input => {
+    input.style.marginBottom = "12px";
+    input.style.marginTop = "4px";
+    input.style.padding = "10px 12px";
   });
 }
 
@@ -201,7 +273,8 @@ function renderHeaderProfile() {
 
   if (profAvatar) profAvatar.src = currentUser.photo_url;
   if (profName) profName.innerText = currentUser.first_name;
-  if (profId) profId.innerText = currentUser.username;
+  // ইউজার আইডি কপি করার সুবিধার্থে ইউজারনেমের সাথে আইডি
+  if (profId) profId.innerText = `${currentUser.username} (${currentUser.id})`;
 }
 
 // --- NAVIGATION HANDLERS ---
@@ -222,7 +295,7 @@ window.navigateTo = function(pageId, element) {
   }
 };
 
-// --- FIRESTORE REALTIME USER ACCOUNT & REFERRAL BONUS ---
+// --- FIRESTORE REALTIME USER ACCOUNT (TELEGRAM ID DRIVEN) ---
 function initUserAccount() {
   const userRef = doc(db, "users", currentUser.id);
   onSnapshot(userRef, async (snap) => {
@@ -252,6 +325,7 @@ function initUserAccount() {
       }
 
       await setDoc(userRef, {
+        telegram_id: currentUser.raw_id,
         name: currentUser.first_name,
         username: currentUser.username,
         balance: initialBalance,
@@ -303,7 +377,7 @@ function updateBalanceDisplays() {
   if (wBal) wBal.innerText = formattedBal;
 }
 
-// --- CATEGORY MATCHES LISTENERS (RELIABLE FIXED MATCH FETCHING) ---
+// --- CATEGORY MATCHES LISTENERS ---
 window.openCategoryMatches = function(categoryKey) {
   currentSelectedMode = categoryKey;
   const grid = document.getElementById("category-list-view");
@@ -333,18 +407,16 @@ window.backToCategories = function() {
   if (tg && tg.BackButton) tg.BackButton.hide();
 };
 
-// ম্যাচ লোডিং ফিক্সড এবং জয়েন করা ইউজারদের জন্য রুম আইডি ও পাসওয়ার্ড দেখানো
 function listenCategoryMatches(categoryKey) {
   if (activeMatchUnsubscribe) activeMatchUnsubscribe();
 
   const container = document.getElementById("active-matches-container");
   if (!container) return;
 
-  container.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-sub);">ম্যাচ লোড হচ্ছে...</div>`;
+  const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
+  container.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-sub);">${dict.loading_matches}</div>`;
 
   const config = MODE_CONFIGS[categoryKey] || { maxSlots: 48 };
-
-  // 'tournaments' কালেকশন থেকে ডাটা ফেচ করা
   const q = collection(db, "tournaments");
 
   activeMatchUnsubscribe = onSnapshot(q, (snapshot) => {
@@ -354,7 +426,6 @@ function listenCategoryMatches(categoryKey) {
     snapshot.forEach((docSnap) => {
       const match = { id: docSnap.id, ...docSnap.data() };
 
-      // ক্যাটাগরি ম্যাপিং নিখুঁতভাবে চেক
       const matchCategory = (match.category || "").trim();
       if (matchCategory !== categoryKey) return;
       if (match.status && match.status !== "active") return;
@@ -367,7 +438,6 @@ function listenCategoryMatches(categoryKey) {
       const isFull = joinedCount >= maxSlots;
       const progressPercent = Math.min(100, (joinedCount / maxSlots) * 100);
 
-      // সিকিউরড রুম আইডি ও পাসওয়ার্ড বক্স (শুধুমাত্র জয়েন হওয়া ইউজাররা দেখতে পারবে)
       let roomInfoHTML = "";
       if (isJoined) {
         if (match.roomId && match.roomPass) {
@@ -383,7 +453,7 @@ function listenCategoryMatches(categoryKey) {
         } else {
           roomInfoHTML = `
             <div style="background: rgba(255, 171, 0, 0.1); border: 1px solid #ffab00; border-radius: 8px; padding: 8px; margin: 10px 0; text-align: center; font-size: 12px; color: #ffab00;">
-              ⏳ রুম আইডি ও পাসওয়ার্ড খেলা শুরুর ১০ মিনিট আগে এখানে দেওয়া হবে।
+              ${dict.room_pending_msg}
             </div>
           `;
         }
@@ -399,19 +469,19 @@ function listenCategoryMatches(categoryKey) {
         
         <div class="prize-pool-grid">
           <div class="prize-item">
-            <span class="prize-rank">Total Prize</span>
+            <span class="prize-rank">${dict.total_prize}</span>
             <span class="prize-val">৳ ${match.totalPrize || 0}</span>
           </div>
         </div>
         
         <div class="entry-fee-box">
-          <span>Entry Fee:</span>
+          <span>${dict.entry_fee}:</span>
           <strong class="prize-val">৳ ${match.entryFee || 0}</strong>
         </div>
 
         <div class="slots-progress">
           <div class="progress-info">
-            <span>Slots Joined</span>
+            <span>${dict.slots_joined}</span>
             <span>${joinedCount}/${maxSlots}</span>
           </div>
           <div class="progress-bar-bg">
@@ -422,24 +492,23 @@ function listenCategoryMatches(categoryKey) {
         ${roomInfoHTML}
 
         <button class="btn-primary-glow" ${isJoined || isFull ? 'disabled' : ''} onclick="openJoinModal('${match.id}', ${match.entryFee || 0}, ${maxSlots})">
-          ${isJoined ? 'Joined' : (isFull ? 'Match Full' : 'Join Match')}
+          ${isJoined ? dict.btn_joined : (isFull ? dict.btn_full : dict.btn_join)}
         </button>
       `;
       container.appendChild(card);
     });
 
     if (!hasActiveMatches) {
-      const noMatchText = TRANSLATIONS[currentLang]?.no_matches_found || "এই ক্যাটাগরিতে বর্তমানে কোনো ম্যাচ চালু নেই।";
-      container.innerHTML = `<div class="empty-matches-msg" style="text-align:center; padding: 30px; color: var(--text-sub);">${noMatchText}</div>`;
+      container.innerHTML = `<div class="empty-matches-msg" style="text-align:center; padding: 30px; color: var(--text-sub);">${dict.no_matches_found}</div>`;
     }
   }, (error) => {
     console.error("Firestore Match Error:", error);
-    container.innerHTML = `<div style="text-align:center; padding: 20px; color: #ff4757;">ম্যাচ ডাটা লোড করতে সমস্যা হয়েছে! ফায়ারবেস পারমিশন বা নেটওয়ার্ক চেক করুন।</div>`;
   });
 }
 
-// --- LIVE TAB FIRESTORE LISTENER (ONLY JOINED MATCH ROOM CODES) ---
+// --- LIVE TAB FIRESTORE LISTENER ---
 function listenLiveMatches() {
+  const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
   onSnapshot(collection(db, "tournaments"), (snapshot) => {
     const container = document.getElementById("live-matches-container");
     if (!container) return;
@@ -452,7 +521,6 @@ function listenLiveMatches() {
       const players = data.players || [];
       const isJoined = players.some(p => p.id === currentUser.id);
 
-      // শুধুমাত্র যদি প্লেয়ার ম্যাচটিতে জয়েন থাকে এবং রুম তথ্য প্রকাশিত থাকে
       if (isJoined && data.roomId && data.roomPass) {
         hasLiveMatches = true;
         const card = document.createElement("div");
@@ -464,11 +532,11 @@ function listenLiveMatches() {
           </div>
           <div class="copy-number-box" style="margin-bottom: 6px;">
             <span>Room ID: <strong id="room-id-${docSnap.id}">${data.roomId}</strong></span>
-            <button onclick="copyNumber('room-id-${docSnap.id}')"><i class="fa-solid fa-copy"></i> Copy</button>
+            <button onclick="copyNumber('room-id-${docSnap.id}')"><i class="fa-solid fa-copy"></i> ${dict.copy}</button>
           </div>
           <div class="copy-number-box">
             <span>Password: <strong id="room-pass-${docSnap.id}">${data.roomPass}</strong></span>
-            <button onclick="copyNumber('room-pass-${docSnap.id}')"><i class="fa-solid fa-copy"></i> Copy</button>
+            <button onclick="copyNumber('room-pass-${docSnap.id}')"><i class="fa-solid fa-copy"></i> ${dict.copy}</button>
           </div>
         `;
         container.appendChild(card);
@@ -476,7 +544,7 @@ function listenLiveMatches() {
     });
 
     if (!hasLiveMatches) {
-      container.innerHTML = `<p style="color: var(--text-sub); text-align: center; margin-top: 30px;">আপনার জয়েন করা কোনো ম্যাচের রুম আইডি এখনো প্রকাশ করা হয়নি।</p>`;
+      container.innerHTML = `<p style="color: var(--text-sub); text-align: center; margin-top: 30px;">${dict.no_live_msg}</p>`;
     }
   });
 }
@@ -499,36 +567,54 @@ window.selectDepMethod = function(method, btn) {
   
   const phoneElement = document.getElementById("dep-phone-number");
   const instructionText = document.getElementById("dep-instruction-text");
+  const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
 
   if (method === 'bkash') {
     if (phoneElement) phoneElement.innerText = '01816640707';
-    if (instructionText) instructionText.innerText = 'bKash মার্চেন্ট নাম্বারে (Make Payment) করুন:';
+    if (instructionText) instructionText.innerText = dict.bkash_instruction;
   } else {
     if (phoneElement) phoneElement.innerText = '01323431323';
-    if (instructionText) instructionText.innerText = 'নগদ পার্সোনাল নাম্বারে (Send Money) করুন:';
+    if (instructionText) instructionText.innerText = dict.nagad_instruction;
   }
 };
 
 window.copyNumber = function(elementId) {
   const el = document.getElementById(elementId);
+  const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
   if (el) {
     const textToCopy = el.value || el.innerText;
     navigator.clipboard.writeText(textToCopy);
-    alert("কপি করা হয়েছে!");
+    alert(dict.copied_msg);
   }
 };
 
+// --- DEPOSIT SUBMISSION (PURE TELEGRAM ID & VERIFIED TRXID) ---
 window.submitDeposit = async function() {
-  const amount = parseFloat(document.getElementById("dep-amount").value);
-  const trxid = document.getElementById("dep-trxid").value.trim();
+  const amountInput = document.getElementById("dep-amount");
+  const trxInput = document.getElementById("dep-trxid");
 
-  if (!amount || amount < 50) return alert("সর্বনিম্ন ডিপোজিট পরিমাণ ৳৫০");
-  if (!trxid) return alert("Transaction ID (TrxID) দিন!");
+  const amount = parseFloat(amountInput.value);
+  let trxid = trxInput.value.trim().toUpperCase();
+  const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
+
+  if (!amount || isNaN(amount) || amount < 50) {
+    return alert(dict.min_dep_alert);
+  }
+
+  // বিকাশ ও নগদ TrxID ভ্যালিডেশন (৮-১২ অক্ষরের আলফানিউমেরিক)
+  const trxRegex = /^[A-Z0-9]{8,12}$/;
+
+  if (!trxid || !trxRegex.test(trxid) || /^(.)\1+$/.test(trxid) || trxid.includes("TEST")) {
+    return alert(dict.invalid_trx_alert);
+  }
 
   try {
-    const depRef = doc(db, "deposits", `${currentUser.id}_${Date.now()}`);
+    const depDocId = `${currentUser.id}_${Date.now()}`;
+    const depRef = doc(db, "deposits", depDocId);
+
     await setDoc(depRef, {
-      user_id: currentUser.id,
+      user_id: currentUser.id, // pure Telegram ID identifier
+      telegram_id: currentUser.raw_id,
       user_name: currentUser.first_name,
       amount: amount,
       trx_id: trxid,
@@ -537,11 +623,12 @@ window.submitDeposit = async function() {
       timestamp: Date.now()
     });
 
-    alert("ডিপোজিট রিকোয়েস্ট সফলভাবে জমা নেওয়া হয়েছে!");
-    document.getElementById("dep-amount").value = "";
-    document.getElementById("dep-trxid").value = "";
+    alert(dict.dep_success_msg);
+    amountInput.value = "";
+    trxInput.value = "";
   } catch (err) {
-    alert("ব্যর্থ হয়েছে: " + err.message);
+    console.error("Deposit Error:", err);
+    alert("Error: " + err.message);
   }
 };
 
@@ -550,9 +637,9 @@ window.submitWithdraw = async function() {
   const num = document.getElementById("withdraw-number").value.trim();
   const amount = parseFloat(document.getElementById("withdraw-amount").value);
 
-  if (!num) return alert("মোবাইল নম্বর লিখুন!");
-  if (!amount || amount < 100) return alert("সর্বনিম্ন উইথড্র ৳১০০");
-  if (amount > userBalance) return alert("পর্যাপ্ত ব্যালেন্স নেই!");
+  if (!num) return alert("Enter account number!");
+  if (!amount || amount < 100) return alert("Minimum withdrawal is ৳100");
+  if (amount > userBalance) return alert("Insufficient balance!");
 
   const userRef = doc(db, "users", currentUser.id);
   const reqRef = doc(db, "withdrawals", `${currentUser.id}_${Date.now()}`);
@@ -562,11 +649,12 @@ window.submitWithdraw = async function() {
       const uSnap = await transaction.get(userRef);
       const curBal = uSnap.data().balance || 0;
 
-      if (curBal < amount) throw new Error("পর্যাপ্ত ব্যালেন্স নেই!");
+      if (curBal < amount) throw new Error("Insufficient balance!");
 
       transaction.update(userRef, { balance: curBal - amount });
       transaction.set(reqRef, {
         user_id: currentUser.id,
+        telegram_id: currentUser.raw_id,
         user_name: currentUser.first_name,
         method: method,
         account: num,
@@ -577,16 +665,17 @@ window.submitWithdraw = async function() {
       });
     });
 
-    alert("উইথড্র রিকোয়েস্ট সফলভাবে জমা হয়েছে!");
+    alert("Withdrawal request submitted successfully!");
     document.getElementById("withdraw-number").value = "";
     document.getElementById("withdraw-amount").value = "";
   } catch (err) {
-    alert("উইথড্র ব্যর্থ: " + err.message);
+    alert("Withdrawal failed: " + err.message);
   }
 };
 
 function listenTransactionHistory() {
   const container = document.getElementById("history-list-container");
+  const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
 
   let depositsList = [];
   let withdrawalsList = [];
@@ -598,18 +687,19 @@ function listenTransactionHistory() {
     container.innerHTML = "";
 
     if (combined.length === 0) {
-      container.innerHTML = `<p class="limit-note" style="text-align:center;">কোনো লেনদেনের ইতিহাস পাওয়া যায়নি।</p>`;
+      container.innerHTML = `<p class="limit-note" style="text-align:center;">${dict.no_history}</p>`;
       return;
     }
 
     combined.forEach(tx => {
       const statusClass = (tx.status || "pending").toLowerCase();
-      const formattedDate = tx.timestamp ? new Date(tx.timestamp).toLocaleDateString("bn-BD", {
+      const formattedDate = tx.timestamp ? new Date(tx.timestamp).toLocaleDateString(currentLang === 'bn' ? "bn-BD" : "en-US", {
         month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
       }) : "N/A";
 
       const item = document.createElement("div");
       item.className = "history-item";
+      item.style.marginBottom = "8px";
       item.innerHTML = `
         <div>
           <strong>${tx.type || 'Transaction'} (${tx.method || 'bKash'})</strong>
@@ -643,7 +733,7 @@ function listenTransactionHistory() {
 // --- MULTI-STEP JOIN WIZARD ---
 window.openJoinModal = function(matchId, entryFee, maxSlots) {
   if (userBalance < entryFee) {
-    alert("পর্যাপ্ত ব্যালেন্স নেই! দয়া করে ওয়ালেট থেকে ডিপোজিট করুন।");
+    alert("Insufficient balance! Please deposit from wallet.");
     navigateTo('wallet', document.querySelectorAll(".nav-item")[2]);
     return;
   }
@@ -669,7 +759,7 @@ function showWizardStepInternal(stepNum) {
 window.goToWizardStep = function(stepNum) {
   if (stepNum === 2) {
     const ign = document.getElementById("join-game-name").value.trim();
-    if (!ign) return alert("Free Fire In-Game Name দিন!");
+    if (!ign) return alert("Enter Free Fire In-Game Name!");
     tempStepData.ff_name = ign;
 
     try {
@@ -691,7 +781,7 @@ window.goToWizardStep = function(stepNum) {
 
 window.confirmMatchJoin = function() {
   const uid = document.getElementById("join-game-uid").value.trim();
-  if (!uid) return alert("Free Fire UID লিখুন!");
+  if (!uid) return alert("Enter Free Fire UID!");
   tempStepData.ff_uid = uid;
 
   if (typeof window.showGiga === 'function') {
@@ -727,8 +817,8 @@ async function processTournamentRegistration() {
       const uSnap = await transaction.get(userRef);
       const mSnap = await transaction.get(matchRef);
 
-      if (!uSnap.exists()) throw new Error("ইউজার ডাটা পাওয়া যায়নি!");
-      if (!mSnap.exists()) throw new Error("ম্যাচটি আর উপলব্ধ নেই!");
+      if (!uSnap.exists()) throw new Error("User data not found!");
+      if (!mSnap.exists()) throw new Error("Match is no longer available!");
 
       const curBal = uSnap.data().balance || 0;
       const matchesPlayed = uSnap.data().matchesPlayed || 0;
@@ -736,9 +826,9 @@ async function processTournamentRegistration() {
       const players = matchData.players || [];
       const maxSlots = matchData.maxSlots || currentSelectedMatch.maxSlots || 48;
 
-      if (curBal < currentSelectedMatch.fee) throw new Error("পর্যাপ্ত ব্যালেন্স নেই!");
-      if (players.length >= maxSlots) throw new Error("ম্যাচটি ইতিমধ্যে ফুল হয়ে গেছে!");
-      if (players.some(p => p.id === currentUser.id)) throw new Error("আপনি ইতিমধ্যে এই ম্যাচে জয়েন করেছেন!");
+      if (curBal < currentSelectedMatch.fee) throw new Error("Insufficient balance!");
+      if (players.length >= maxSlots) throw new Error("Match is already full!");
+      if (players.some(p => p.id === currentUser.id)) throw new Error("You have already joined this match!");
 
       transaction.update(userRef, { 
         balance: curBal - currentSelectedMatch.fee,
@@ -756,9 +846,9 @@ async function processTournamentRegistration() {
       });
     });
 
-    alert("সাফল্যের সাথে টুর্নামেন্টে জয়েন করা হয়েছে!");
+    alert("Successfully joined the tournament!");
     closeJoinModal();
   } catch (err) {
-    alert("জয়েন হতে সমস্যা হয়েছে: " + err.message);
+    alert("Failed to join match: " + err.message);
   }
-    }
+}

@@ -30,6 +30,8 @@ let currentUser = {
 let userBalance = 0;
 let currentSelectedMode = "";
 let currentSelectedMatch = null;
+let selectedTeamNo = 1;
+let selectedSlotNo = 1;
 let tempStepData = { ff_name: "", ff_uid: "" };
 let activeMatchUnsubscribe = null;
 let startParam = "";
@@ -101,7 +103,11 @@ const TRANSLATIONS = {
     btn_joined: "Joined",
     btn_full: "Match Full",
     btn_join: "Join Match",
-    no_history: "No transaction history found."
+    no_history: "No transaction history found.",
+    view_details: "View Details",
+    view_match: "View Match",
+    select_team: "Select Team & Slot",
+    match_rules: "Match Rules & Details"
   },
   bn: {
     last_winner: "সর্বশেষ বিজয়ী",
@@ -163,7 +169,11 @@ const TRANSLATIONS = {
     btn_joined: "জয়েন করা হয়েছে",
     btn_full: "ম্যাচ ফুল",
     btn_join: "জয়েন করুন",
-    no_history: "কোনো লেনদেনের ইতিহাস পাওয়া যায়নি।"
+    no_history: "কোনো লেনদেনের ইতিহাস পাওয়া যায়নি।",
+    view_details: "View Details",
+    view_match: "View Match",
+    select_team: "টিম ও স্লট সিলেক্ট করুন",
+    match_rules: "ম্যাচ নিয়ম ও বিস্তারিত"
   }
 };
 
@@ -172,13 +182,16 @@ let currentLang = localStorage.getItem("user_language") || "en";
 
 // Category Configurations
 const MODE_CONFIGS = {
-  'lone_wolf_1v1': { title: 'Lone Wolf Solo (1V1)', maxSlots: 2 },
-  'lone_wolf_2v2': { title: 'Lone Wolf Duo (2V2)', maxSlots: 4 },
-  'clash_squad_4v4': { title: 'Clash Squad (4V4)', maxSlots: 8 },
-  'br_solo': { title: 'Battle Royale Solo', maxSlots: 48 },
-  'br_duo': { title: 'Battle Royale Duo', maxSlots: 48 },
-  'br_squad': { title: 'Battle Royale Squad', maxSlots: 48 }
+  'lone_wolf_1v1': { title: 'Lone Wolf Solo (1V1)', maxSlots: 2, teamSize: 1 },
+  'lone_wolf_2v2': { title: 'Lone Wolf Duo (2V2)', maxSlots: 4, teamSize: 2 },
+  'clash_squad_4v4': { title: 'Clash Squad (4V4)', maxSlots: 8, teamSize: 4 },
+  'br_solo': { title: 'Battle Royale Solo', maxSlots: 48, teamSize: 1 },
+  'br_duo': { title: 'Battle Royale Duo', maxSlots: 48, teamSize: 2 },
+  'br_squad': { title: 'Battle Royale Squad', maxSlots: 48, teamSize: 4 }
 };
+
+// Global Store for Matches Data
+let loadedMatchesMap = {};
 
 // --- INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
@@ -199,7 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupTelegramBackButton();
   }
 
-  // Load Saved Language (Default EN)
+  // Load Saved Language
   const langSelect = document.getElementById("language-selector");
   if (langSelect) langSelect.value = currentLang;
   applyLanguage(currentLang);
@@ -211,7 +224,6 @@ document.addEventListener("DOMContentLoaded", () => {
   fixWalletInputSpacing();
 });
 
-// TELEGRAM NATIVE BACK BUTTON SETUP
 function setupTelegramBackButton() {
   if (!tg || !tg.BackButton) return;
 
@@ -235,7 +247,6 @@ window.changeLanguage = function(lang) {
 function applyLanguage(lang) {
   const dict = TRANSLATIONS[lang] || TRANSLATIONS.en;
   
-  // Text Content Translation
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.getAttribute("data-i18n");
     if (dict[key]) {
@@ -243,7 +254,6 @@ function applyLanguage(lang) {
     }
   });
 
-  // Placeholder Translation
   const depAmt = document.getElementById("dep-amount");
   const depTrx = document.getElementById("dep-trxid");
   const wNum = document.getElementById("withdraw-number");
@@ -254,7 +264,6 @@ function applyLanguage(lang) {
   if (wNum) wNum.placeholder = dict.withdraw_num_ph;
   if (wAmt) wAmt.placeholder = dict.withdraw_amt_ph;
 
-  // Active view updates
   if (currentSelectedMode) {
     listenCategoryMatches(currentSelectedMode);
   }
@@ -307,7 +316,7 @@ window.navigateTo = function(pageId, element) {
   }
 };
 
-// --- FIRESTORE REALTIME USER ACCOUNT (TELEGRAM ID DRIVEN) ---
+// --- FIRESTORE REALTIME USER ACCOUNT ---
 function initUserAccount() {
   const userRef = doc(db, "users", currentUser.id);
   onSnapshot(userRef, async (snap) => {
@@ -428,7 +437,7 @@ function listenCategoryMatches(categoryKey) {
   const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
   container.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-sub);">${dict.loading_matches}</div>`;
 
-  const config = MODE_CONFIGS[categoryKey] || { maxSlots: 48 };
+  const config = MODE_CONFIGS[categoryKey] || { maxSlots: 48, teamSize: 1 };
   const q = collection(db, "tournaments");
 
   activeMatchUnsubscribe = onSnapshot(q, (snapshot) => {
@@ -437,6 +446,7 @@ function listenCategoryMatches(categoryKey) {
 
     snapshot.forEach((docSnap) => {
       const match = { id: docSnap.id, ...docSnap.data() };
+      loadedMatchesMap[match.id] = match;
 
       const matchCategory = (match.category || "").trim();
       if (matchCategory !== categoryKey) return;
@@ -450,15 +460,20 @@ function listenCategoryMatches(categoryKey) {
       const isFull = joinedCount >= maxSlots;
       const progressPercent = Math.min(100, (joinedCount / maxSlots) * 100);
 
+      // Room credentials with direct COPY buttons
       let roomInfoHTML = "";
       if (isJoined) {
         if (match.roomId && match.roomPass) {
           roomInfoHTML = `
-            <div style="background: rgba(46, 213, 115, 0.15); border: 1px solid #2ed573; border-radius: 8px; padding: 10px; margin: 10px 0; text-align: center;">
-              <div style="color: #2ed573; font-weight: bold; margin-bottom: 5px;">🔑 Room Credentials</div>
-              <div style="display: flex; justify-content: space-around; font-size: 13px; color: #fff;">
-                <span>ID: <strong>${match.roomId}</strong></span>
-                <span>Pass: <strong>${match.roomPass}</strong></span>
+            <div style="background: rgba(46, 213, 115, 0.12); border: 1px solid #2ed573; border-radius: 8px; padding: 10px; margin: 10px 0;">
+              <div style="color: #2ed573; font-weight: bold; margin-bottom: 8px; text-align: center;">🔑 Room Credentials</div>
+              <div class="copy-number-box" style="margin-bottom: 6px;">
+                <span>ID: <strong id="card-room-id-${match.id}">${match.roomId}</strong></span>
+                <button onclick="copyNumber('card-room-id-${match.id}')"><i class="fa-solid fa-copy"></i> ${dict.copy}</button>
+              </div>
+              <div class="copy-number-box">
+                <span>Pass: <strong id="card-room-pass-${match.id}">${match.roomPass}</strong></span>
+                <button onclick="copyNumber('card-room-pass-${match.id}')"><i class="fa-solid fa-copy"></i> ${dict.copy}</button>
               </div>
             </div>
           `;
@@ -503,7 +518,17 @@ function listenCategoryMatches(categoryKey) {
 
         ${roomInfoHTML}
 
-        <button class="btn-primary-glow" ${isJoined || isFull ? 'disabled' : ''} onclick="openJoinModal('${match.id}', ${match.entryFee || 0}, ${maxSlots})">
+        <!-- TWO NEW ACTION BUTTONS -->
+        <div style="display: flex; gap: 8px; margin-top: 12px; margin-bottom: 8px;">
+          <button class="btn-primary-glow" style="flex: 1; background: #2f3542; font-size: 12px; padding: 8px;" onclick="openMatchDetailsModal('${match.id}')">
+            <i class="fa-solid fa-eye"></i> ${dict.view_details}
+          </button>
+          <button class="btn-primary-glow" style="flex: 1; background: #ff4757; font-size: 12px; padding: 8px;" onclick="openYouTubeChannel()">
+            <i class="fa-solid fa-play"></i> ${dict.view_match}
+          </button>
+        </div>
+
+        <button class="btn-primary-glow" ${isJoined || isFull ? 'disabled' : ''} onclick="openJoinModal('${match.id}', ${match.entryFee || 0}, ${maxSlots}, ${config.teamSize})">
           ${isJoined ? dict.btn_joined : (isFull ? dict.btn_full : dict.btn_join)}
         </button>
       `;
@@ -517,6 +542,30 @@ function listenCategoryMatches(categoryKey) {
     console.error("Firestore Match Error:", error);
   });
 }
+
+// --- MATCH DETAILS MODAL & YOUTUBE ---
+window.openMatchDetailsModal = function(matchId) {
+  const match = loadedMatchesMap[matchId];
+  const contentEl = document.getElementById("match-details-content");
+  if (match && contentEl) {
+    const details = match.description || match.rules || "এই ম্যাচের জন্য কোনো বিশেষ কমেন্ট বা নির্দেশিকা দেওয়া হয়নি। নিয়ম মাফিক গেম খেলুন।";
+    contentEl.innerText = details;
+    document.getElementById("details-modal").classList.remove("hidden");
+  }
+};
+
+window.closeDetailsModal = function() {
+  document.getElementById("details-modal").classList.add("hidden");
+};
+
+window.openYouTubeChannel = function() {
+  const ytUrl = "https://youtube.com/@dark-team-1m?si=a1sk1zpbZurXwvp5";
+  if (window.Telegram?.WebApp?.openLink) {
+    window.Telegram.WebApp.openLink(ytUrl);
+  } else {
+    window.open(ytUrl, "_blank");
+  }
+};
 
 // --- LIVE TAB FIRESTORE LISTENER ---
 function listenLiveMatches() {
@@ -600,7 +649,6 @@ window.copyNumber = function(elementId) {
   }
 };
 
-// --- DEPOSIT SUBMISSION (PURE TELEGRAM ID & VERIFIED TRXID) ---
 window.submitDeposit = async function() {
   const amountInput = document.getElementById("dep-amount");
   const trxInput = document.getElementById("dep-trxid");
@@ -741,20 +789,88 @@ function listenTransactionHistory() {
   });
 }
 
-// --- MULTI-STEP JOIN WIZARD ---
-window.openJoinModal = function(matchId, entryFee, maxSlots) {
+// --- MULTI-STEP JOIN WIZARD & TEAM/SLOT SELECTION ---
+window.openJoinModal = function(matchId, entryFee, maxSlots, teamSize = 1) {
   if (userBalance < entryFee) {
     alert("Insufficient balance! Please deposit from wallet.");
     navigateTo('wallet', document.querySelectorAll(".nav-item")[2]);
     return;
   }
 
-  currentSelectedMatch = { id: matchId, fee: entryFee, maxSlots: maxSlots };
+  currentSelectedMatch = { id: matchId, fee: entryFee, maxSlots: maxSlots, teamSize: teamSize };
   const feeEl = document.getElementById("modal-entry-fee");
   if (feeEl) feeEl.innerText = entryFee;
   
-  showWizardStepInternal(1);
+  if (teamSize > 1) {
+    renderTeamSlots(matchId, maxSlots, teamSize);
+    showWizardStepInternal(0);
+  } else {
+    selectedTeamNo = 1;
+    selectedSlotNo = 1;
+    showWizardStepInternal(1);
+  }
+  
   document.getElementById("join-modal").classList.remove("hidden");
+};
+
+function renderTeamSlots(matchId, maxSlots, teamSize) {
+  const container = document.getElementById("team-slots-container");
+  if (!container) return;
+  container.innerHTML = "";
+
+  const match = loadedMatchesMap[matchId] || {};
+  const players = match.players || [];
+  const totalTeams = Math.ceil(maxSlots / teamSize);
+
+  selectedTeamNo = null;
+  selectedSlotNo = null;
+
+  for (let t = 1; t <= totalTeams; t++) {
+    const teamBox = document.createElement("div");
+    teamBox.style.cssText = "background: rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1);";
+    
+    let slotsHTML = `<div style="font-weight: bold; font-size: 13px; color: var(--gold-color); margin-bottom: 6px;">Team ${t}</div><div style="display: flex; gap: 8px; flex-wrap: wrap;">`;
+
+    for (let s = 1; s <= teamSize; s++) {
+      const occupiedPlayer = players.find(p => p.teamNo === t && p.slotNo === s);
+      const isTaken = !!occupiedPlayer;
+
+      slotsHTML += `
+        <button id="btn-slot-${t}-${s}" class="slot-btn" ${isTaken ? 'disabled' : ''} onclick="selectTeamAndSlot(${t}, ${s})" style="flex: 1; min-width: 60px; padding: 6px; font-size: 11px; border-radius: 6px; border: 1px solid ${isTaken ? '#555' : 'var(--gold-color)'}; background: ${isTaken ? '#333' : 'transparent'}; color: ${isTaken ? '#888' : '#fff'};">
+          ${isTaken ? occupiedPlayer.name.substring(0, 7) : `Slot ${s}`}
+        </button>
+      `;
+    }
+    slotsHTML += `</div>`;
+    teamBox.innerHTML = slotsHTML;
+    container.appendChild(teamBox);
+  }
+}
+
+window.selectTeamAndSlot = function(teamNo, slotNo) {
+  document.querySelectorAll(".slot-btn").forEach(btn => {
+    if (!btn.disabled) {
+      btn.style.background = "transparent";
+      btn.style.borderColor = "var(--gold-color)";
+    }
+  });
+
+  const selectedBtn = document.getElementById(`btn-slot-${teamNo}-${slotNo}`);
+  if (selectedBtn) {
+    selectedBtn.style.background = "var(--gold-color)";
+    selectedBtn.style.borderColor = "var(--gold-color)";
+    selectedBtn.style.color = "#000";
+  }
+
+  selectedTeamNo = teamNo;
+  selectedSlotNo = slotNo;
+};
+
+window.proceedToCredentialsStep = function() {
+  if (!selectedTeamNo || !selectedSlotNo) {
+    return alert("অনুগ্রহ করে যেকোনো একটি ফাঁকা টিম স্লট সিলেক্ট করুন!");
+  }
+  showWizardStepInternal(1);
 };
 
 window.closeJoinModal = function() {
@@ -852,6 +968,8 @@ async function processTournamentRegistration() {
           name: currentUser.first_name,
           ff_name: tempStepData.ff_name,
           ff_uid: tempStepData.ff_uid,
+          teamNo: selectedTeamNo || 1,
+          slotNo: selectedSlotNo || 1,
           joinedAt: Date.now()
         })
       });
@@ -862,4 +980,4 @@ async function processTournamentRegistration() {
   } catch (err) {
     alert("Failed to join match: " + err.message);
   }
-      }
+}

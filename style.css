@@ -1,3 +1,6 @@
+/* ==========================================================================
+   GLOBAL VARIABLES & RESET
+   ========================================================================== */
 :root {
   --bg-color: #080a10;
   --card-bg: #111522;
@@ -44,7 +47,9 @@ body {
   border-radius: 4px;
 }
 
-/* App Header */
+/* ==========================================================================
+   APP HEADER
+   ========================================================================== */
 .app-header {
   display: flex;
   justify-content: space-between;
@@ -90,6 +95,23 @@ body {
   color: var(--text-sub);
 }
 
+.header-right-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.language-selector {
+  background: #11141e;
+  color: #fff;
+  border: 1px solid var(--border-color);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+}
+
 .user-balance {
   background: var(--primary-glow-sub);
   border: 1px solid rgba(0, 255, 135, 0.4);
@@ -104,7 +126,9 @@ body {
   box-shadow: 0 0 12px rgba(0, 255, 135, 0.15);
 }
 
-/* Main Content & Sections */
+/* ==========================================================================
+   MAIN CONTENT & PAGE SECTIONS
+   ========================================================================== */
 .main-content {
   padding: 16px;
   max-width: 500px;
@@ -137,7 +161,9 @@ body {
   letter-spacing: 0.5px;
 }
 
-/* Winner Banner */
+/* ==========================================================================
+   PAGE 1: HOME PAGE
+   ========================================================================== */
 .winner-card {
   background: linear-gradient(135deg, rgba(255, 184, 0, 0.12), rgba(255, 42, 95, 0.08));
   border: 1px solid rgba(255, 184, 0, 0.3);
@@ -165,7 +191,6 @@ body {
   color: var(--text-main);
 }
 
-/* Category Cards Grid */
 .match-categories-grid {
   display: grid;
   grid-template-columns: repeat(1, 1fr);
@@ -234,7 +259,7 @@ body {
   background: var(--border-color);
 }
 
-/* Tournament Match Card */
+/* Matches List Cards */
 .tournament-card {
   background: var(--card-bg);
   border-radius: 16px;
@@ -338,88 +363,9 @@ body {
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* =========================================
-   PROFILES SECTION FIXES (FIXED OVERFLOW)
-   ========================================= */
-.profile-card {
-  background: var(--card-bg);
-  padding: 20px;
-  border-radius: 16px;
-  border: 1px solid var(--border-color);
-  margin-bottom: 16px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-}
-
-.user-profile-header {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-/* প্রোফাইল পিকচার ফিক্স: গোল ফ্রেম, পারফেক্ট সাইজ ও গ্লো */
-.user-profile-header img, #profile-user-avatar {
-  width: 84px !important;
-  height: 84px !important;
-  max-width: 84px !important;
-  max-height: 84px !important;
-  min-width: 84px !important;
-  min-height: 84px !important;
-  border-radius: 50% !important;
-  object-fit: cover !important;
-  border: 3px solid var(--accent-color) !important;
-  box-shadow: 0 0 20px var(--accent-glow) !important;
-  margin: 0 auto 12px auto !important;
-  display: block !important;
-}
-
-.user-profile-header h2 {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin-bottom: 2px;
-}
-
-.profile-balance-badge {
-  background: var(--card-bg-light);
-  border: 1px solid var(--border-color);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 13px;
-  margin-top: 10px;
-  display: inline-block;
-}
-
-.profile-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.stat-box {
-  background: var(--card-bg-light) !important;
-  border: 1px solid var(--border-color);
-  padding: 14px !important;
-  border-radius: 12px !important;
-  text-align: center;
-}
-
-.stat-val {
-  font-size: 20px !important;
-  font-weight: 800 !important;
-}
-
-.stat-lbl {
-  font-size: 11px !important;
-  color: var(--text-sub) !important;
-  margin-top: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Wallet Section & Tabs */
+/* ==========================================================================
+   PAGE 3: WALLET & TRANSACTIONS
+   ========================================================================== */
 .wallet-action-card {
   background: var(--card-bg);
   padding: 18px;
@@ -555,78 +501,6 @@ body {
   background: var(--accent-color);
 }
 
-/* Forms & Inputs */
-.form-group {
-  margin-bottom: 12px;
-}
-
-.gaming-input {
-  width: 100%;
-  padding: 12px 14px;
-  background: var(--card-bg-light);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  color: #fff;
-  font-size: 13px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.gaming-input:focus {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 10px var(--accent-glow);
-}
-
-.limit-note {
-  font-size: 11px;
-  color: var(--text-sub);
-  margin-bottom: 10px;
-}
-
-/* Buttons */
-.btn-primary-glow {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  background: linear-gradient(135deg, #ff2a5f, #ff6b81);
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
-  border-radius: 10px;
-  cursor: pointer;
-  box-shadow: 0 4px 20px var(--accent-glow);
-  transition: all 0.2s;
-}
-
-.btn-primary-glow:active {
-  transform: scale(0.98);
-}
-
-.btn-primary-glow:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.btn-secondary {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  background: var(--primary-glow);
-  color: #000;
-  font-weight: 700;
-  font-size: 14px;
-  border-radius: 10px;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 255, 135, 0.3);
-  transition: all 0.2s;
-}
-
-.btn-secondary:active {
-  transform: scale(0.98);
-}
-
-/* History List */
 .history-list {
   display: flex;
   flex-direction: column;
@@ -670,7 +544,240 @@ body {
   border: 1px solid rgba(255, 42, 95, 0.3);
 }
 
-/* Bottom Nav Bar */
+/* ==========================================================================
+   PAGE 4: USER PROFILE PAGE
+   ========================================================================== */
+.profile-card {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+
+.profile-card-space {
+  margin-top: 12px;
+}
+
+.user-profile-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-profile-header img, #profile-user-avatar {
+  width: 84px !important;
+  height: 84px !important;
+  max-width: 84px !important;
+  max-height: 84px !important;
+  min-width: 84px !important;
+  min-height: 84px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 3px solid var(--accent-color) !important;
+  box-shadow: 0 0 20px var(--accent-glow) !important;
+  margin: 0 auto 12px auto !important;
+  display: block !important;
+}
+
+.user-profile-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.profile-balance-badge {
+  background: var(--card-bg-light);
+  border: 1px solid var(--border-color);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+.profile-title {
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+
+.profile-stats-grid {
+  display: flex;
+  gap: 10px;
+}
+
+.stat-box {
+  flex: 1;
+  background: #11141e !important;
+  border: 1px solid var(--border-color);
+  padding: 12px !important;
+  border-radius: 8px !important;
+  text-align: center;
+}
+
+.stat-val {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  display: block;
+}
+
+.stat-gold {
+  color: var(--gold-color);
+}
+
+.stat-glow {
+  color: var(--primary-glow);
+}
+
+.stat-green {
+  color: #2ed573;
+}
+
+.stat-lbl {
+  display: block;
+  font-size: 11px !important;
+  color: var(--text-sub) !important;
+  margin-top: 4px;
+}
+
+.referral-stat-box {
+  margin-top: 10px;
+}
+
+.referral-container {
+  margin-top: 15px;
+}
+
+.referral-label {
+  font-size: 12px;
+  color: var(--text-sub);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.referral-copy-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #11141e;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #222;
+}
+
+.referral-input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  width: 75%;
+  font-size: 11px;
+  outline: none;
+}
+
+.btn-copy-small {
+  background: var(--primary-glow, #3742fa);
+  border: none;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.1s;
+}
+
+.btn-copy-small:active {
+  transform: scale(0.95);
+}
+
+/* ==========================================================================
+   FORMS & BUTTONS
+   ========================================================================== */
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-spacing {
+  margin-top: 15px;
+}
+
+.input-spacing {
+  margin-top: 8px;
+}
+
+.gaming-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--card-bg-light);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+  margin-bottom: 8px;
+}
+
+.gaming-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.limit-note {
+  font-size: 11px;
+  color: var(--text-sub);
+  margin-bottom: 10px;
+}
+
+.btn-primary-glow {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  background: linear-gradient(135deg, #ff2a5f, #ff6b81);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px var(--accent-glow);
+  transition: all 0.2s;
+}
+
+.btn-primary-glow:active {
+  transform: scale(0.98);
+}
+
+.btn-primary-glow:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  background: var(--primary-glow);
+  color: #000;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 255, 135, 0.3);
+  transition: all 0.2s;
+}
+
+.btn-secondary:active {
+  transform: scale(0.98);
+}
+
+/* ==========================================================================
+   BOTTOM NAVIGATION
+   ========================================================================== */
 .bottom-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
@@ -710,7 +817,9 @@ body {
   color: var(--accent-color);
 }
 
-/* Modals */
+/* ==========================================================================
+   MODALS & OVERLAYS
+   ========================================================================== */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -765,7 +874,7 @@ body {
   margin-bottom: 14px;
 }
 
-/* Helpers */
+/* Utility Helpers */
 .hidden {
   display: none !important;
   }

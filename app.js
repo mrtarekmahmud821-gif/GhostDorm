@@ -33,7 +33,7 @@ let tempStepData = { ff_name: "", ff_uid: "" };
 let activeMatchUnsubscribe = null;
 let startParam = "";
 
-// BOT USERNAME (আপনার টেলিগ্রাম বটের ইউজারনেম এখানে দিন)
+// BOT USERNAME
 const BOT_USERNAME = "YourBotUsername_bot"; 
 
 const tg = window.Telegram?.WebApp;
@@ -134,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (u.photo_url) currentUser.photo_url = u.photo_url;
       }
       if (tg.initDataUnsafe.start_param) {
-        startParam = tg.initDataUnsafe.start_param; // e.g. "ref_12345678"
+        startParam = tg.initDataUnsafe.start_param;
       }
     }
     setupTelegramBackButton();
@@ -236,7 +236,6 @@ function initUserAccount() {
       if (refCountEl) refCountEl.innerText = data.referralsCount || 0;
       if (refLinkInput) refLinkInput.value = `https://t.me/${BOT_USERNAME}?start=ref_${currentUser.id}`;
     } else {
-      // নতুন ইউজার অ্যাকাউন্ট তৈরি এবং রেফারেল চেক
       let initialBalance = 0;
       let referredBy = null;
 
@@ -244,7 +243,7 @@ function initUserAccount() {
         const refId = startParam.replace("ref_", "").trim();
         if (refId && refId !== currentUser.id) {
           referredBy = refId;
-          initialBalance = 1; // নতুন ইউজার ১ টাকা বোনাস পাবে
+          initialBalance = 1;
         }
       }
 
@@ -261,7 +260,6 @@ function initUserAccount() {
 
       userBalance = initialBalance;
 
-      // যে রেফার করেছে তাকে ২ টাকা বোনাস দেওয়া
       if (referredBy) {
         rewardReferrer(referredBy);
       }
@@ -270,7 +268,6 @@ function initUserAccount() {
   });
 }
 
-// রেফারারকে ২ টাকা রিওয়ার্ড দেওয়ার ট্রানজেকশন
 async function rewardReferrer(referrerId) {
   const referrerRef = doc(db, "users", referrerId);
   try {
@@ -281,7 +278,7 @@ async function rewardReferrer(referrerId) {
         const curBal = refData.balance || 0;
         const curRefs = refData.referralsCount || 0;
         transaction.update(referrerRef, {
-          balance: curBal + 2, // রেফারার ২ টাকা পাবে
+          balance: curBal + 2,
           referralsCount: curRefs + 1
         });
       }
@@ -302,7 +299,7 @@ function updateBalanceDisplays() {
   if (wBal) wBal.innerText = formattedBal;
 }
 
-// --- CATEGORY MATCHES LISTENERS (RELIABLE MATCH DISPLAY FIX) ---
+// --- CATEGORY MATCHES LISTENERS (RELIABLE FIXED MATCH FETCHING) ---
 window.openCategoryMatches = function(categoryKey) {
   currentSelectedMode = categoryKey;
   const grid = document.getElementById("category-list-view");
@@ -332,7 +329,7 @@ window.backToCategories = function() {
   if (tg && tg.BackButton) tg.BackButton.hide();
 };
 
-// ম্যাচ লোডিং ফিক্স (কোনো ম্যাচ মিস হবে না)
+// ম্যাচ লোডিং ফিক্সড এবং জয়েন করা ইউজারদের জন্য রুম আইডি ও পাসওয়ার্ড দেখানো
 function listenCategoryMatches(categoryKey) {
   if (activeMatchUnsubscribe) activeMatchUnsubscribe();
 
@@ -343,7 +340,7 @@ function listenCategoryMatches(categoryKey) {
 
   const config = MODE_CONFIGS[categoryKey] || { maxSlots: 48 };
 
-  // সব 'tournaments' কালেকশন থেকে রিয়েলটাইম ডাটা আনবে যাতে ইনডেক্সিং বা ফিল্টারিং এরর না হয়
+  // 'tournaments' কালেকশন থেকে ডাটা ফেচ করা
   const q = collection(db, "tournaments");
 
   activeMatchUnsubscribe = onSnapshot(q, (snapshot) => {
@@ -353,7 +350,7 @@ function listenCategoryMatches(categoryKey) {
     snapshot.forEach((docSnap) => {
       const match = { id: docSnap.id, ...docSnap.data() };
 
-      // ক্যাটাগরি এবং একটিভ স্ট্যাটাস নিখুঁতভাবে চেক
+      // ক্যাটাগরি ম্যাপিং নিখুঁতভাবে চেক
       const matchCategory = (match.category || "").trim();
       if (matchCategory !== categoryKey) return;
       if (match.status && match.status !== "active") return;
@@ -366,12 +363,27 @@ function listenCategoryMatches(categoryKey) {
       const isFull = joinedCount >= maxSlots;
       const progressPercent = Math.min(100, (joinedCount / maxSlots) * 100);
 
-      const prizeHTML = `
-        <div class="prize-item">
-          <span class="prize-rank">Total Prize</span>
-          <span class="prize-val">৳ ${match.totalPrize || 0}</span>
-        </div>
-      `;
+      // সিকিউরড রুম আইডি ও পাসওয়ার্ড বক্স (শুধুমাত্র জয়েন হওয়া ইউজাররা দেখতে পারবে)
+      let roomInfoHTML = "";
+      if (isJoined) {
+        if (match.roomId && match.roomPass) {
+          roomInfoHTML = `
+            <div style="background: rgba(46, 213, 115, 0.15); border: 1px solid #2ed573; border-radius: 8px; padding: 10px; margin: 10px 0; text-align: center;">
+              <div style="color: #2ed573; font-weight: bold; margin-bottom: 5px;">🔑 Room Credentials</div>
+              <div style="display: flex; justify-content: space-around; font-size: 13px; color: #fff;">
+                <span>ID: <strong>${match.roomId}</strong></span>
+                <span>Pass: <strong>${match.roomPass}</strong></span>
+              </div>
+            </div>
+          `;
+        } else {
+          roomInfoHTML = `
+            <div style="background: rgba(255, 171, 0, 0.1); border: 1px solid #ffab00; border-radius: 8px; padding: 8px; margin: 10px 0; text-align: center; font-size: 12px; color: #ffab00;">
+              ⏳ রুম আইডি ও পাসওয়ার্ড খেলা শুরুর ১০ মিনিট আগে এখানে দেওয়া হবে।
+            </div>
+          `;
+        }
+      }
 
       const card = document.createElement("div");
       card.className = "tournament-card";
@@ -381,7 +393,12 @@ function listenCategoryMatches(categoryKey) {
           <span class="match-time"><i class="fa-regular fa-clock"></i> ${match.matchTime || "Today"}</span>
         </div>
         
-        <div class="prize-pool-grid">${prizeHTML}</div>
+        <div class="prize-pool-grid">
+          <div class="prize-item">
+            <span class="prize-rank">Total Prize</span>
+            <span class="prize-val">৳ ${match.totalPrize || 0}</span>
+          </div>
+        </div>
         
         <div class="entry-fee-box">
           <span>Entry Fee:</span>
@@ -398,6 +415,8 @@ function listenCategoryMatches(categoryKey) {
           </div>
         </div>
 
+        ${roomInfoHTML}
+
         <button class="btn-primary-glow" ${isJoined || isFull ? 'disabled' : ''} onclick="openJoinModal('${match.id}', ${match.entryFee || 0}, ${maxSlots})">
           ${isJoined ? 'Joined' : (isFull ? 'Match Full' : 'Join Match')}
         </button>
@@ -410,43 +429,51 @@ function listenCategoryMatches(categoryKey) {
       container.innerHTML = `<div class="empty-matches-msg" style="text-align:center; padding: 30px; color: var(--text-sub);">${noMatchText}</div>`;
     }
   }, (error) => {
-    console.error("Error fetching matches:", error);
-    container.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--accent-color);">ম্যাচ ডাটা লোড করতে সমস্যা হয়েছে!</div>`;
+    console.error("Firestore Match Error:", error);
+    container.innerHTML = `<div style="text-align:center; padding: 20px; color: #ff4757;">ম্যাচ ডাটা লোড করতে সমস্যা হয়েছে! ফায়ারবেস পারমিশন বা নেটওয়ার্ক চেক করুন।</div>`;
   });
 }
 
-// --- LIVE MATCHES FIRESTORE LISTENER ---
+// --- LIVE TAB FIRESTORE LISTENER (ONLY JOINED MATCH ROOM CODES) ---
 function listenLiveMatches() {
-  onSnapshot(collection(db, "live_matches"), (snapshot) => {
+  onSnapshot(collection(db, "tournaments"), (snapshot) => {
     const container = document.getElementById("live-matches-container");
     if (!container) return;
     container.innerHTML = "";
 
-    if (snapshot.empty) {
-      container.innerHTML = `<p style="color: var(--text-sub); text-align: center; margin-top: 30px;">কোনো লাইভ ম্যাচ বর্তমানে চালু নেই।</p>`;
-      return;
-    }
+    let hasLiveMatches = false;
 
     snapshot.forEach((docSnap) => {
       const data = docSnap.data();
-      const card = document.createElement("div");
-      card.className = "wallet-action-card";
-      card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <h4 style="color: var(--gold-color);">${data.title || "Live Free Fire Match"}</h4>
-          <span class="status-badge approved">LIVE</span>
-        </div>
-        <div class="copy-number-box" style="margin-bottom: 6px;">
-          <span>Room ID: <strong id="room-id-${docSnap.id}">${data.room_id || "N/A"}</strong></span>
-          <button onclick="copyNumber('room-id-${docSnap.id}')"><i class="fa-solid fa-copy"></i> Copy</button>
-        </div>
-        <div class="copy-number-box">
-          <span>Password: <strong id="room-pass-${docSnap.id}">${data.room_pass || "N/A"}</strong></span>
-          <button onclick="copyNumber('room-pass-${docSnap.id}')"><i class="fa-solid fa-copy"></i> Copy</button>
-        </div>
-      `;
-      container.appendChild(card);
+      const players = data.players || [];
+      const isJoined = players.some(p => p.id === currentUser.id);
+
+      // শুধুমাত্র যদি প্লেয়ার ম্যাচটিতে জয়েন থাকে এবং রুম তথ্য প্রকাশিত থাকে
+      if (isJoined && data.roomId && data.roomPass) {
+        hasLiveMatches = true;
+        const card = document.createElement("div");
+        card.className = "wallet-action-card";
+        card.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h4 style="color: var(--gold-color);">${data.title || "Live Free Fire Match"}</h4>
+            <span class="status-badge approved">LIVE</span>
+          </div>
+          <div class="copy-number-box" style="margin-bottom: 6px;">
+            <span>Room ID: <strong id="room-id-${docSnap.id}">${data.roomId}</strong></span>
+            <button onclick="copyNumber('room-id-${docSnap.id}')"><i class="fa-solid fa-copy"></i> Copy</button>
+          </div>
+          <div class="copy-number-box">
+            <span>Password: <strong id="room-pass-${docSnap.id}">${data.roomPass}</strong></span>
+            <button onclick="copyNumber('room-pass-${docSnap.id}')"><i class="fa-solid fa-copy"></i> Copy</button>
+          </div>
+        `;
+        container.appendChild(card);
+      }
     });
+
+    if (!hasLiveMatches) {
+      container.innerHTML = `<p style="color: var(--text-sub); text-align: center; margin-top: 30px;">আপনার জয়েন করা কোনো ম্যাচের রুম আইডি এখনো প্রকাশ করা হয়নি।</p>`;
+    }
   });
 }
 

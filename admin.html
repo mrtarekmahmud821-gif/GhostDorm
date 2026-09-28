@@ -36,7 +36,6 @@
     <!-- TABS NAVIGATION -->
     <nav class="admin-tabs">
       <button class="tab-btn active" onclick="switchTab('matches', this)"><i class="fa-solid fa-gamepad"></i> Matches</button>
-      <button class="tab-btn" onclick="switchTab('live', this)"><i class="fa-solid fa-tower-broadcast"></i> Live Room</button>
       <button class="tab-btn" onclick="switchTab('deposits', this)"><i class="fa-solid fa-arrow-down-to-line"></i> Deposits</button>
       <button class="tab-btn" onclick="switchTab('withdrawals', this)"><i class="fa-solid fa-arrow-up-from-line"></i> Withdrawals</button>
       <button class="tab-btn" onclick="switchTab('users', this)"><i class="fa-solid fa-users"></i> Users</button>
@@ -48,10 +47,19 @@
       <section id="tab-matches" class="tab-content active">
         <div class="card">
           <h3><i class="fa-solid fa-plus-circle"></i> Create New Match</h3>
-          <div class="form-group">
-            <label>Match Title</label>
-            <input type="text" id="match-title" class="input-field" placeholder="e.g. Daily Match #12">
+          
+          <!-- Match Title & Max Slots side-by-side -->
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Match Title</label>
+              <input type="text" id="match-title" class="input-field" placeholder="e.g. Daily Match #12">
+            </div>
+            <div class="form-group">
+              <label>Max Slots (Players)</label>
+              <input type="number" id="match-slots" class="input-field" placeholder="e.g. 48" value="48">
+            </div>
           </div>
+
           <div class="grid-2">
             <div class="form-group">
               <label>Category</label>
@@ -69,20 +77,45 @@
               <input type="text" id="match-time" class="input-field" placeholder="e.g. Today 8:00 PM">
             </div>
           </div>
+
           <div class="grid-2">
             <div class="form-group">
               <label>Entry Fee (৳)</label>
               <input type="number" id="match-entry" class="input-field" placeholder="e.g. 50">
             </div>
             <div class="form-group">
-              <label>Total Prize (৳)</label>
-              <input type="number" id="match-prize" class="input-field" placeholder="e.g. 100">
+              <label>Comment / Match Note (View Details এ দেখাবে)</label>
+              <input type="text" id="match-comment" class="input-field" placeholder="e.g. No Emulator allowed. Map: Bermuda">
             </div>
           </div>
-          <div class="form-group">
-            <label>Max Slots (Players)</label>
-            <input type="number" id="match-slots" class="input-field" placeholder="e.g. 48" value="48">
+
+          <!-- Dynamic Prize Distribution (1st to 5th Place) -->
+          <h4 style="color: var(--gold-color); font-size: 13px; margin: 12px 0 8px 0;"><i class="fa-solid fa-trophy"></i> Prize Distribution (১ম - ৫ম স্থান)</h4>
+          <div class="grid-3">
+            <div class="form-group">
+              <label>1st Prize (৳)</label>
+              <input type="number" id="prize-rank-1" class="input-field" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label>2nd Prize (৳)</label>
+              <input type="number" id="prize-rank-2" class="input-field" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label>3rd Prize (৳)</label>
+              <input type="number" id="prize-rank-3" class="input-field" placeholder="0">
+            </div>
           </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>4th Prize (৳)</label>
+              <input type="number" id="prize-rank-4" class="input-field" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label>5th Prize (৳)</label>
+              <input type="number" id="prize-rank-5" class="input-field" placeholder="0">
+            </div>
+          </div>
+
           <button class="btn-submit" onclick="createNewMatch()">Publish Match</button>
         </div>
 
@@ -96,6 +129,7 @@
                   <th>Category</th>
                   <th>Fee</th>
                   <th>Joined</th>
+                  <th>Room Code & Alert</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -105,51 +139,10 @@
         </div>
       </section>
 
-      <!-- TAB 2: LIVE MATCH ROOM MANAGEMENT -->
-      <section id="tab-live" class="tab-content">
-        <div class="card">
-          <h3><i class="fa-solid fa-key"></i> Add Live Room Details & Send Bot Alert</h3>
-          <div class="form-group">
-            <label>Select Tournament Match</label>
-            <select id="live-match-select" class="input-field">
-              <option value="">-- Select Match --</option>
-            </select>
-          </div>
-          <div class="grid-2">
-            <div class="form-group">
-              <label>Room ID</label>
-              <input type="text" id="live-room-id" class="input-field" placeholder="e.g. 8493021">
-            </div>
-            <div class="form-group">
-              <label>Room Password</label>
-              <input type="text" id="live-room-pass" class="input-field" placeholder="e.g. 1234">
-            </div>
-          </div>
-          <button class="btn-submit" onclick="publishLiveMatch()">Publish Room & Send Telegram Message</button>
-        </div>
-
-        <div class="card">
-          <h3>Active Live Rooms</h3>
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Room ID</th>
-                  <th>Password</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="admin-live-table"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 3: DEPOSITS MANAGEMENT -->
+      <!-- TAB 2: DEPOSITS MANAGEMENT -->
       <section id="tab-deposits" class="tab-content">
         <div class="card">
-          <h3><i class="fa-solid fa-money-bill-wave"></i> Pending Deposit Requests</h3>
+          <h3><i class="fa-solid fa-money-bill-wave"></i> Deposit Requests</h3>
           <div class="table-responsive">
             <table>
               <thead>
@@ -157,6 +150,7 @@
                   <th>User ID</th>
                   <th>Amount</th>
                   <th>TrxID</th>
+                  <th>Date & Time</th>
                   <th>Status</th>
                   <th>Action</th>
                 </tr>
@@ -167,10 +161,10 @@
         </div>
       </section>
 
-      <!-- TAB 4: WITHDRAWALS MANAGEMENT -->
+      <!-- TAB 3: WITHDRAWALS MANAGEMENT -->
       <section id="tab-withdrawals" class="tab-content">
         <div class="card">
-          <h3><i class="fa-solid fa-hand-holding-dollar"></i> Pending Withdrawal Requests</h3>
+          <h3><i class="fa-solid fa-hand-holding-dollar"></i> Withdrawal Requests</h3>
           <div class="table-responsive">
             <table>
               <thead>
@@ -188,7 +182,7 @@
         </div>
       </section>
 
-      <!-- TAB 5: USERS MANAGEMENT -->
+      <!-- TAB 4: USERS MANAGEMENT -->
       <section id="tab-users" class="tab-content">
         <div class="card">
           <h3><i class="fa-solid fa-users-gear"></i> All Registered Users</h3>
@@ -210,6 +204,68 @@
       </section>
 
     </main>
+  </div>
+
+  <!-- MODAL: EDIT MATCH -->
+  <div id="modal-edit-match" class="modal-overlay hidden">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('modal-edit-match')">&times;</button>
+      <h3><i class="fa-solid fa-pen-to-square"></i> Edit Match</h3>
+      <input type="hidden" id="edit-match-id">
+      
+      <div class="form-group">
+        <label>Match Title</label>
+        <input type="text" id="edit-match-title" class="input-field">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Match Time</label>
+          <input type="text" id="edit-match-time" class="input-field">
+        </div>
+        <div class="form-group">
+          <label>Entry Fee (৳)</label>
+          <input type="number" id="edit-match-entry" class="input-field">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Comment / Match Note</label>
+        <input type="text" id="edit-match-comment" class="input-field">
+      </div>
+      <button class="btn-submit" onclick="saveMatchEdit()">Save Changes</button>
+    </div>
+  </div>
+
+  <!-- MODAL: SELECT WINNERS -->
+  <div id="modal-select-winners" class="modal-overlay hidden">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('modal-select-winners')">&times;</button>
+      <h3><i class="fa-solid fa-trophy"></i> Declare Winners & Auto-Pay</h3>
+      <p style="font-size:11px; color:var(--text-sub); margin-bottom:12px;">উইনার সিলেক্ট করে সেভ দিলে অটোমেটিক নির্ধারিত প্রাইস মানি ব্যবহারকারীর ব্যালেন্সে চলে যাবে।</p>
+      <input type="hidden" id="winner-match-id">
+
+      <div class="form-group">
+        <label>1st Winner (১ম স্থান)</label>
+        <select id="select-winner-1" class="input-field"><option value="">-- None --</option></select>
+      </div>
+      <div class="form-group">
+        <label>2nd Winner (২য় স্থান)</label>
+        <select id="select-winner-2" class="input-field"><option value="">-- None --</option></select>
+      </div>
+      <div class="form-group">
+        <label>3rd Winner (৩য় স্থান)</label>
+        <select id="select-winner-3" class="input-field"><option value="">-- None --</option></select>
+      </div>
+      <div class="form-group">
+        <label>4th Winner (৪র্থ স্থান)</label>
+        <select id="select-winner-4" class="input-field"><option value="">-- None --</option></select>
+      </div>
+      <div class="form-group">
+        <label>5th Winner (৫ম স্থান)</label>
+        <select id="select-winner-5" class="input-field"><option value="">-- None --</option></select>
+      </div>
+
+      <button class="btn-submit" onclick="submitMatchWinners()">Confirm & Send Prizes</button>
+    </div>
   </div>
 
   <script type="module" src="admin.js"></script>

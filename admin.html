@@ -9,7 +9,6 @@
 </head>
 <body>
 
-  <!-- LOGIN OVERLAY -->
   <div id="login-overlay" class="login-overlay">
     <div class="login-box">
       <h2><i class="fa-solid fa-user-shield"></i> Admin Login</h2>
@@ -24,16 +23,13 @@
     </div>
   </div>
 
-  <!-- ADMIN MAIN PANEL -->
   <div id="admin-panel" class="hidden">
     
-    <!-- HEADER -->
     <header class="admin-header">
       <h2><i class="fa-solid fa-headset"></i> Control Panel</h2>
       <button class="btn-logout" onclick="handleAdminLogout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
     </header>
 
-    <!-- TABS NAVIGATION -->
     <nav class="admin-tabs">
       <button class="tab-btn active" onclick="switchTab('matches', this)"><i class="fa-solid fa-gamepad"></i> Matches</button>
       <button class="tab-btn" onclick="switchTab('deposits', this)"><i class="fa-solid fa-arrow-down-to-line"></i> Deposits</button>
@@ -43,12 +39,10 @@
 
     <main class="admin-content">
 
-      <!-- TAB 1: MATCHES MANAGEMENT -->
       <section id="tab-matches" class="tab-content active">
         <div class="card">
           <h3><i class="fa-solid fa-plus-circle"></i> Create New Match</h3>
           
-          <!-- Match Title & Max Slots side-by-side -->
           <div class="grid-2">
             <div class="form-group">
               <label>Match Title</label>
@@ -84,35 +78,32 @@
               <input type="number" id="match-entry" class="input-field" placeholder="e.g. 50">
             </div>
             <div class="form-group">
-              <label>Comment / Match Note (View Details এ দেখাবে)</label>
-              <input type="text" id="match-comment" class="input-field" placeholder="e.g. No Emulator allowed. Map: Bermuda">
+              <label>Match Comment / Note (App View Details)</label>
+              <input type="text" id="match-comment" class="input-field" placeholder="e.g. No Grenade / Limited Ammo">
             </div>
           </div>
 
-          <!-- Dynamic Prize Distribution (1st to 5th Place) -->
-          <h4 style="color: var(--gold-color); font-size: 13px; margin: 12px 0 8px 0;"><i class="fa-solid fa-trophy"></i> Prize Distribution (১ম - ৫ম স্থান)</h4>
-          <div class="grid-3">
-            <div class="form-group">
-              <label>1st Prize (৳)</label>
-              <input type="number" id="prize-rank-1" class="input-field" placeholder="0">
+          <label style="font-size: 13px; color: var(--gold-color); font-weight: bold; margin-top: 10px; display: block;">Prize Distribution (৳):</label>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; margin-bottom: 15px;">
+            <div>
+              <label style="font-size: 11px;">1st Prize</label>
+              <input type="number" id="prize-rank-1" class="input-field" placeholder="1st Place">
             </div>
-            <div class="form-group">
-              <label>2nd Prize (৳)</label>
-              <input type="number" id="prize-rank-2" class="input-field" placeholder="0">
+            <div>
+              <label style="font-size: 11px;">2nd Prize</label>
+              <input type="number" id="prize-rank-2" class="input-field" placeholder="2nd Place">
             </div>
-            <div class="form-group">
-              <label>3rd Prize (৳)</label>
-              <input type="number" id="prize-rank-3" class="input-field" placeholder="0">
+            <div>
+              <label style="font-size: 11px;">3rd Prize</label>
+              <input type="number" id="prize-rank-3" class="input-field" placeholder="3rd Place">
             </div>
-          </div>
-          <div class="grid-2">
-            <div class="form-group">
-              <label>4th Prize (৳)</label>
-              <input type="number" id="prize-rank-4" class="input-field" placeholder="0">
+            <div>
+              <label style="font-size: 11px;">4th Prize</label>
+              <input type="number" id="prize-rank-4" class="input-field" placeholder="4th Place">
             </div>
-            <div class="form-group">
-              <label>5th Prize (৳)</label>
-              <input type="number" id="prize-rank-5" class="input-field" placeholder="0">
+            <div>
+              <label style="font-size: 11px;">5th Prize</label>
+              <input type="number" id="prize-rank-5" class="input-field" placeholder="5th Place">
             </div>
           </div>
 
@@ -125,12 +116,12 @@
             <table>
               <thead>
                 <tr>
-                  <th>Title</th>
+                  <th>Title & Comment</th>
                   <th>Category</th>
                   <th>Fee</th>
                   <th>Joined</th>
                   <th>Room Code & Alert</th>
-                  <th>Action</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="admin-matches-table"></tbody>
@@ -139,7 +130,6 @@
         </div>
       </section>
 
-      <!-- TAB 2: DEPOSITS MANAGEMENT -->
       <section id="tab-deposits" class="tab-content">
         <div class="card">
           <h3><i class="fa-solid fa-money-bill-wave"></i> Deposit Requests</h3>
@@ -147,7 +137,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>User ID</th>
+                  <th>User ID / Name</th>
                   <th>Amount</th>
                   <th>TrxID</th>
                   <th>Date & Time</th>
@@ -161,7 +151,6 @@
         </div>
       </section>
 
-      <!-- TAB 3: WITHDRAWALS MANAGEMENT -->
       <section id="tab-withdrawals" class="tab-content">
         <div class="card">
           <h3><i class="fa-solid fa-hand-holding-dollar"></i> Withdrawal Requests</h3>
@@ -169,7 +158,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>User ID</th>
+                  <th>User ID / Name</th>
                   <th>Method / Account</th>
                   <th>Amount</th>
                   <th>Status</th>
@@ -182,7 +171,6 @@
         </div>
       </section>
 
-      <!-- TAB 4: USERS MANAGEMENT -->
       <section id="tab-users" class="tab-content">
         <div class="card">
           <h3><i class="fa-solid fa-users-gear"></i> All Registered Users</h3>
@@ -206,65 +194,64 @@
     </main>
   </div>
 
-  <!-- MODAL: EDIT MATCH -->
   <div id="modal-edit-match" class="modal-overlay hidden">
-    <div class="modal-card">
-      <button class="modal-close" onclick="closeModal('modal-edit-match')">&times;</button>
-      <h3><i class="fa-solid fa-pen-to-square"></i> Edit Match</h3>
+    <div class="modal-box">
+      <h3><i class="fa-solid fa-pen"></i> Edit Match Details</h3>
       <input type="hidden" id="edit-match-id">
-      
       <div class="form-group">
         <label>Match Title</label>
         <input type="text" id="edit-match-title" class="input-field">
       </div>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Match Time</label>
-          <input type="text" id="edit-match-time" class="input-field">
-        </div>
-        <div class="form-group">
-          <label>Entry Fee (৳)</label>
-          <input type="number" id="edit-match-entry" class="input-field">
-        </div>
+      <div class="form-group">
+        <label>Match Time</label>
+        <input type="text" id="edit-match-time" class="input-field">
       </div>
       <div class="form-group">
-        <label>Comment / Match Note</label>
+        <label>Entry Fee (৳)</label>
+        <input type="number" id="edit-match-entry" class="input-field">
+      </div>
+      <div class="form-group">
+        <label>Match Comment</label>
         <input type="text" id="edit-match-comment" class="input-field">
       </div>
-      <button class="btn-submit" onclick="saveMatchEdit()">Save Changes</button>
+      <div style="display:flex; gap:10px; margin-top:15px;">
+        <button class="btn-submit" onclick="saveMatchEdit()">Save Changes</button>
+        <button class="btn-action btn-reject" style="width:100%; text-align:center;" onclick="closeModal('modal-edit-match')">Cancel</button>
+      </div>
     </div>
   </div>
 
-  <!-- MODAL: SELECT WINNERS -->
   <div id="modal-select-winners" class="modal-overlay hidden">
-    <div class="modal-card">
-      <button class="modal-close" onclick="closeModal('modal-select-winners')">&times;</button>
-      <h3><i class="fa-solid fa-trophy"></i> Declare Winners & Auto-Pay</h3>
-      <p style="font-size:11px; color:var(--text-sub); margin-bottom:12px;">উইনার সিলেক্ট করে সেভ দিলে অটোমেটিক নির্ধারিত প্রাইস মানি ব্যবহারকারীর ব্যালেন্সে চলে যাবে।</p>
+    <div class="modal-box">
+      <h3><i class="fa-solid fa-trophy"></i> Select Winners & Distribute Prizes</h3>
+      <p style="font-size: 11px; color: var(--text-sub); margin-bottom: 12px;">উইনার সিলেক্ট করার সাথে সাথেই তাদের একাউন্টে সেট করা প্রাইজ মানি যুক্ত হয়ে যাবে।</p>
       <input type="hidden" id="winner-match-id">
+      
+      <div class="form-group">
+        <label>1st Winner (1st Rank Prize)</label>
+        <select id="select-winner-1" class="input-field"></select>
+      </div>
+      <div class="form-group">
+        <label>2nd Winner (2nd Rank Prize)</label>
+        <select id="select-winner-2" class="input-field"></select>
+      </div>
+      <div class="form-group">
+        <label>3rd Winner (3rd Rank Prize)</label>
+        <select id="select-winner-3" class="input-field"></select>
+      </div>
+      <div class="form-group">
+        <label>4th Winner (4th Rank Prize)</label>
+        <select id="select-winner-4" class="input-field"></select>
+      </div>
+      <div class="form-group">
+        <label>5th Winner (5th Rank Prize)</label>
+        <select id="select-winner-5" class="input-field"></select>
+      </div>
 
-      <div class="form-group">
-        <label>1st Winner (১ম স্থান)</label>
-        <select id="select-winner-1" class="input-field"><option value="">-- None --</option></select>
+      <div style="display:flex; gap:10px; margin-top:15px;">
+        <button class="btn-submit" onclick="submitMatchWinners()">Confirm & Send Prizes</button>
+        <button class="btn-action btn-reject" style="width:100%; text-align:center;" onclick="closeModal('modal-select-winners')">Cancel</button>
       </div>
-      <div class="form-group">
-        <label>2nd Winner (২য় স্থান)</label>
-        <select id="select-winner-2" class="input-field"><option value="">-- None --</option></select>
-      </div>
-      <div class="form-group">
-        <label>3rd Winner (৩য় স্থান)</label>
-        <select id="select-winner-3" class="input-field"><option value="">-- None --</option></select>
-      </div>
-      <div class="form-group">
-        <label>4th Winner (৪র্থ স্থান)</label>
-        <select id="select-winner-4" class="input-field"><option value="">-- None --</option></select>
-      </div>
-      <div class="form-group">
-        <label>5th Winner (৫ম স্থান)</label>
-        <select id="select-winner-5" class="input-field"><option value="">-- None --</option></select>
-      </div>
-
-      <button class="btn-submit" onclick="submitMatchWinners()">Confirm & Send Prizes</button>
     </div>
   </div>
 

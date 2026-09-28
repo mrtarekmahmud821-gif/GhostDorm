@@ -79,13 +79,12 @@ window.switchTab = function(tabName, btn) {
 // INITIALIZE ADMIN DATA
 function initAdminData() {
   listenAdminMatches();
-  listenAdminLive();
   listenAdminDeposits();
   listenAdminWithdrawals();
   listenAdminUsers();
 }
 
-// --- MATCHES MANAGEMENT ---
+// --- MATCHES MANAGEMENT WITH INLINE ROOM CODE PUBLISHING ---
 window.createNewMatch = async function() {
   const title = document.getElementById("match-title").value.trim();
   const category = document.getElementById("match-category").value;
@@ -99,9 +98,16 @@ window.createNewMatch = async function() {
   try {
     const newDocRef = doc(collection(db, "tournaments"));
     await setDoc(newDocRef, {
-      title, category, matchTime, entryFee, totalPrize, maxSlots,
+      title, 
+      category, 
+      matchTime, 
+      entryFee, 
+      totalPrize, 
+      maxSlots,
       status: "active",
       players: [],
+      roomId: "",
+      roomPass: "",
       createdAt: Date.now()
     });
     alert("ম্যাচ সফলভাবে পাবলিশ হয়েছে!");
@@ -114,16 +120,16 @@ window.createNewMatch = async function() {
 function listenAdminMatches() {
   onSnapshot(collection(db, "tournaments"), (snap) => {
     const tbody = document.getElementById("admin-matches-table");
-    const matchSelect = document.getElementById("live-match-select");
+    if (!tbody) return;
     tbody.innerHTML = "";
-    matchSelect.innerHTML = '<option value="">-- Select Match --</option>';
     allMatchesMap = {};
 
     snap.forEach((docSnap) => {
       const m = docSnap.data();
-      allMatchesMap[docSnap.id] = m;
+      const matchId = docSnap.id;
+      allMatchesMap[matchId] = m;
 
-      // Table Row
+      // Table Row with inline Room ID and Pass inputs
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td><strong>${m.title}</strong></td>
@@ -131,19 +137,56 @@ function listenAdminMatches() {
         <td>৳${m.entryFee}</td>
         <td>${(m.players || []).length}/${m.maxSlots}</td>
         <td>
-          <button class="btn-action btn-delete" onclick="deleteMatch('${docSnap.id}')">Delete</button>
+          <div style="display:flex; flex-direction:column; gap:4px; max-width: 140px;">
+            <input type="text" id="room-id-${matchId}" placeholder="Room ID" value="${m.roomId || ''}" style="padding:4px; font-size:12px; background:#1e1e2d; color:#fff; border:1px solid #333; border-radius:4px;">
+            <input type="text" id="room-pass-${matchId}" placeholder="Room Pass" value="${m.roomPass || ''}" style="padding:4px; font-size:12px; background:#1e1e2d; color:#fff; border:1px solid #333; border-radius:4px;">
+            <button class="btn-action btn-approve" style="font-size:11px; padding:3px 6px;" onclick="publishRoomDetails('${matchId}')">Save & Alert</button>
+          </div>
+        </td>
+        <td>
+          <button class="btn-action btn-delete" onclick="deleteMatch('${matchId}')">Delete</button>
         </td>
       `;
       tbody.appendChild(tr);
-
-      // Populate Live Room Match Selector
-      const opt = document.createElement("option");
-      opt.value = docSnap.id;
-      opt.textContent = `${m.title} (${(m.players || []).length} Players)`;
-      matchSelect.appendChild(opt);
     });
   });
 }
+
+// Publish Room ID & Pass directly for a specific match
+window.publishRoomDetails = async function(matchId) {
+  const roomIdInput = document.getElementById(`room-id-${matchId}`);
+  const roomPassInput = document.getElementById(`room-pass-${matchId}`);
+
+  const roomId = roomIdInput ? roomIdInput.value.trim() : "";
+  const roomPass = roomPassInput ? roomPassInput.value.trim() : "";
+
+  if (!roomId || !roomPass) {
+    return alert("রুম আইডি এবং পাসওয়ার্ড উভয়ই সঠিকভাবে প্রদান করুন!");
+  }
+
+  const selectedMatch = allMatchesMap[matchId];
+  if (!selectedMatch) return alert("ম্যাচ ডাটা পাওয়া যায়নি!");
+
+  try {
+    // Update match document directly
+    const matchRef = doc(db, "tournaments", matchId);
+    await updateDoc(matchRef, {
+      roomId: roomId,
+      roomPass: roomPass,
+      roomPublishedAt: Date.now()
+    });
+
+    alert("রুম আইডি ও পাসওয়ার্ড সফলভাবে আপডেট করা হয়েছে!");
+
+    // Send Telegram Notification to joined players only
+    const joinedPlayers = selectedMatch.players || [];
+    if (joinedPlayers.length > 0) {
+      await notifyJoinedPlayers(joinedPlayers, selectedMatch.title, roomId, roomPass);
+    }
+  } catch (e) {
+    alert("এরর: " + e.message);
+  }
+};
 
 window.deleteMatch = async function(id) {
   if (confirm("আপনি কি নিশ্চিত এই ম্যাচটি ডিলিট করতে চান?")) {
@@ -151,68 +194,11 @@ window.deleteMatch = async function(id) {
   }
 };
 
-// --- LIVE ROOM CODES & TELEGRAM ALERT ---
-window.publishLiveMatch = async function() {
-  const matchId = document.getElementById("live-match-select").value;
-  const room_id = document.getElementById("live-room-id").value.trim();
-  const room_pass = document.getElementById("live-room-pass").value.trim();
-
-  if (!matchId || !room_id || !room_pass) {
-    return alert("ম্যাচ নির্বাচন করুন এবং রুম আইডি ও পাসওয়ার্ড সঠিকভাবে দিন!");
-  }
-
-  const selectedMatch = allMatchesMap[matchId];
-  if (!selectedMatch) return alert("ম্যাচ ডাটা পাওয়া যায়নি!");
-
-  try {
-    // 1. Save Room ID & Pass to Live Collection
-    const newRef = doc(collection(db, "live_matches"));
-    await setDoc(newRef, { 
-      matchId: matchId,
-      title: selectedMatch.title, 
-      room_id, 
-      room_pass, 
-      timestamp: Date.now() 
-    });
-
-    alert("লাইভ রুম কোড ওয়েবসাইটে পাবলিশ করা হয়েছে!");
-
-    // 2. Send Telegram Notification strictly to joined players
-    await notifyJoinedPlayers(selectedMatch.players || [], selectedMatch.title, room_id, room_pass);
-
-    document.getElementById("live-room-id").value = "";
-    document.getElementById("live-room-pass").value = "";
-  } catch (e) {
-    alert("Error: " + e.message);
-  }
-};
-
-function listenAdminLive() {
-  onSnapshot(collection(db, "live_matches"), (snap) => {
-    const tbody = document.getElementById("admin-live-table");
-    tbody.innerHTML = "";
-    snap.forEach((docSnap) => {
-      const l = docSnap.data();
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${l.title}</td>
-        <td><strong>${l.room_id}</strong></td>
-        <td><strong>${l.room_pass}</strong></td>
-        <td><button class="btn-action btn-delete" onclick="deleteLiveMatch('${docSnap.id}')">Remove</button></td>
-      `;
-      tbody.appendChild(tr);
-    });
-  });
-}
-
-window.deleteLiveMatch = async function(id) {
-  await deleteDoc(doc(db, "live_matches", id));
-};
-
 // --- DEPOSITS MANAGEMENT ---
 function listenAdminDeposits() {
   onSnapshot(collection(db, "deposits"), (snap) => {
     const tbody = document.getElementById("admin-deposits-table");
+    if (!tbody) return;
     tbody.innerHTML = "";
     snap.forEach((docSnap) => {
       const d = docSnap.data();
@@ -255,6 +241,7 @@ window.processDeposit = async function(depId, userId, amount, status) {
 function listenAdminWithdrawals() {
   onSnapshot(collection(db, "withdrawals"), (snap) => {
     const tbody = document.getElementById("admin-withdrawals-table");
+    if (!tbody) return;
     tbody.innerHTML = "";
     snap.forEach((docSnap) => {
       const w = docSnap.data();
@@ -297,6 +284,7 @@ window.processWithdrawal = async function(wId, userId, amount, status) {
 function listenAdminUsers() {
   onSnapshot(collection(db, "users"), (snap) => {
     const tbody = document.getElementById("admin-users-table");
+    if (!tbody) return;
     tbody.innerHTML = "";
     snap.forEach((docSnap) => {
       const u = docSnap.data();

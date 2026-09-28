@@ -220,59 +220,55 @@
       </div>
     </section>
 
-    <!-- Profile Card with Referrals -->
-<div class="profile-card">
-  <div class="user-profile-header">
-    <img id="profile-user-avatar" src="" alt="Avatar">
+<!-- PAGE 4: PROFILE PAGE -->
+<section id="page-profile" class="page-section">
+  
+  <!-- Profile Header Card -->
+  <div class="profile-card user-profile-header">
+    <img id="profile-user-avatar" src="https://via.placeholder.com/80" alt="Profile Picture">
     <h2 id="profile-user-name">Player Name</h2>
-    <span id="profile-user-id">@username</span>
+    <span id="profile-user-id" class="user-username">@username</span>
+    <div class="profile-balance-badge" style="margin-top: 8px;">
+      <span data-i18n="current_balance">Account Balance: </span>
+      <strong>৳ <span id="profile-balance-display">0.00</span></strong>
+    </div>
+  </div>
+
+  <!-- Account Summary & Referral Card -->
+  <div class="profile-card" style="margin-top: 12px;">
+    <h3 data-i18n="account_overview" style="font-size: 15px; margin-bottom: 10px;">Account Overview</h3>
     
-    <div class="profile-balance-badge">
-      ব্যালেন্স: ৳ <strong id="profile-balance-display">0.00</strong>
-    </div>
-  </div>
-
-  <div class="profile-stats-grid">
-    <div class="stat-box">
-      <div class="stat-val" id="stat-played">0</div>
-      <div class="stat-lbl">মোট খেলেছেন</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-val" id="stat-wins">0</div>
-      <div class="stat-lbl">মোট জয়</div>
-    </div>
-    <div class="stat-box" style="grid-column: span 2;">
-      <div class="stat-val" id="stat-referrals" style="color: var(--gold-color);">0</div>
-      <div class="stat-lbl">মোট রেফারেল (প্রতি রেফারে ৳২)</div>
-    </div>
-  </div>
-
-  <!-- Referral Link Box -->
-  <div style="margin-top: 15px;">
-    <label style="font-size: 12px; color: var(--text-sub); display: block; margin-bottom: 5px;">আপনার রেফারেল লিংক (বন্ধুকে দিয়ে রেফার করুন ও টাকা জিতুন):</label>
-    <div class="copy-number-box">
-      <input type="text" id="referral-link-input" readonly style="background: transparent; border: none; color: #fff; width: 80%; font-size: 11px; outline: none;" value="Loading link...">
-      <button onclick="copyNumber('referral-link-input')"><i class="fa-solid fa-copy"></i> Copy</button>
-    </div>
-  </div>
-
-
-      
-      <!-- User Stats Overview -->
-      <div class="profile-card">
-        <h3 data-i18n="account_overview">অ্যাকাউন্ট সামারি</h3>
-        <div class="profile-stats-grid" style="display: flex; gap: 10px; margin-top: 10px;">
-          <div class="stat-box" style="flex: 1; background: #11141e; padding: 12px; border-radius: 8px; text-align: center;">
-            <span id="stat-played" class="stat-val" style="font-size: 18px; font-weight: bold; color: var(--gold-color);">0</span>
-            <span class="stat-lbl" style="display: block; font-size: 11px; color: var(--text-sub);" data-i18n="matches_played">মোট খেলেছেন</span>
-          </div>
-          <div class="stat-box" style="flex: 1; background: #11141e; padding: 12px; border-radius: 8px; text-align: center;">
-            <span id="stat-wins" class="stat-val" style="font-size: 18px; font-weight: bold; color: var(--primary-glow);">0</span>
-            <span class="stat-lbl" style="display: block; font-size: 11px; color: var(--text-sub);" data-i18n="total_wins">মোট জয়</span>
-          </div>
-        </div>
+    <!-- User Stats Grid -->
+    <div class="profile-stats-grid" style="display: flex; gap: 10px;">
+      <div class="stat-box" style="flex: 1; background: #11141e; padding: 12px; border-radius: 8px; text-align: center;">
+        <span id="stat-played" class="stat-val" style="font-size: 18px; font-weight: bold; color: var(--gold-color); display: block;">0</span>
+        <span class="stat-lbl" style="display: block; font-size: 11px; color: var(--text-sub); margin-top: 4px;" data-i18n="matches_played">Matches Played</span>
       </div>
-    </section>
+      <div class="stat-box" style="flex: 1; background: #11141e; padding: 12px; border-radius: 8px; text-align: center;">
+        <span id="stat-wins" class="stat-val" style="font-size: 18px; font-weight: bold; color: var(--primary-glow); display: block;">0</span>
+        <span class="stat-lbl" style="display: block; font-size: 11px; color: var(--text-sub); margin-top: 4px;" data-i18n="total_wins">Total Wins</span>
+      </div>
+    </div>
+
+    <!-- Referral Stats Box -->
+    <div class="stat-box" style="background: #11141e; padding: 12px; border-radius: 8px; text-align: center; margin-top: 10px;">
+      <span id="stat-referrals" class="stat-val" style="font-size: 18px; font-weight: bold; color: #2ed573; display: block;">0</span>
+      <span class="stat-lbl" style="display: block; font-size: 11px; color: var(--text-sub); margin-top: 4px;" data-i18n="total_referrals">Total Referrals (৳2 Bonus Each)</span>
+    </div>
+
+    <!-- Referral Link Copy Box -->
+    <div style="margin-top: 15px;">
+      <label style="font-size: 12px; color: var(--text-sub); display: block; margin-bottom: 6px;" data-i18n="referral_link_label">Your Referral Link (Share with friends to earn):</label>
+      <div class="copy-number-box" style="display: flex; align-items: center; justify-content: space-between; background: #11141e; padding: 8px 12px; border-radius: 6px; border: 1px solid #222;">
+        <input type="text" id="referral-link-input" readonly style="background: transparent; border: none; color: #fff; width: 75%; font-size: 11px; outline: none;" value="Loading link...">
+        <button onclick="copyNumber('referral-link-input')" style="background: var(--primary-glow, #3742fa); border: none; color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+          <i class="fa-solid fa-copy"></i> <span data-i18n="copy">Copy</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</section>
 
   </main>
 

@@ -21,8 +21,8 @@
 <body>
 
   <!-- ==================== APP HEADER ==================== -->
-  <header class="app-header">
-    <div class="user-profile">
+  <header class="app-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px;">
+    <div class="user-profile" style="display: flex; align-items: center; gap: 10px;">
       <img id="header-user-avatar" src="https://via.placeholder.com/80" alt="Avatar">
       <div class="user-details">
         <span id="header-user-name" class="user-name">Player Name</span>
@@ -30,15 +30,10 @@
       </div>
     </div>
     
-    <!-- Language Switcher & Wallet Balance -->
-    <div class="header-right-box">
-      <select id="language-selector" class="language-selector" onchange="changeLanguage(this.value)">
-        <option value="bn">🇧🇩 বাংলা</option>
-        <option value="en">🇬🇧 English</option>
-      </select>
-
-      <div class="user-balance">
-        <i class="fa-solid fa-wallet"></i>
+    <!-- Wallet Balance Alignment Fix -->
+    <div class="header-right-box" style="display: flex; align-items: center;">
+      <div class="user-balance" style="display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+        <i class="fa-solid fa-wallet" style="flex-shrink: 0;"></i>
         <span>৳ <span id="header-balance">0.00</span></span>
       </div>
     </div>
@@ -179,7 +174,7 @@
           </div>
 
           <div class="dep-tab-content active">
-            <p class="limit-note" id="dep-instruction-text" data-i18n="bkash_payment_note">bKash মার্চেন্ট নাম্বারে (Make Payment) করুন:</p>
+            <p class="limit-note" id="dep-instruction-text" data-i18n="bkash_instruction">bKash মার্চেন্ট নাম্বারে (Make Payment) করুন:</p>
             <div class="copy-number-box">
               <strong id="dep-phone-number">01816640707</strong>
               <button onclick="copyNumber('dep-phone-number')"><i class="fa-solid fa-copy"></i> <span data-i18n="copy">কপি</span></button>
@@ -228,7 +223,16 @@
         <img id="profile-user-avatar" src="https://via.placeholder.com/80" alt="Profile Picture">
         <h2 id="profile-user-name">Player Name</h2>
         <span id="profile-user-id" class="user-username">@username</span>
-        <div class="profile-balance-badge">
+        
+        <!-- Language Selector Moved to Profile -->
+        <div style="margin-top: 12px;">
+          <select id="language-selector" class="language-selector" onchange="changeLanguage(this.value)" style="padding: 6px 12px; border-radius: 6px; background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2);">
+            <option value="bn" style="background: #111;">🇧🇩 বাংলা</option>
+            <option value="en" style="background: #111;">🇬🇧 English</option>
+          </select>
+        </div>
+
+        <div class="profile-balance-badge" style="margin-top: 12px;">
           <span data-i18n="current_balance_lbl">Account Balance: </span>
           <strong>৳ <span id="profile-balance-display">0.00</span></strong>
         </div>
@@ -272,13 +276,33 @@
 
   </main>
 
-  <!-- ==================== MODALS & WIZARDS ==================== -->
+  <!-- ==================== MATCH DETAILS MODAL ==================== -->
+  <div id="details-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeDetailsModal()">&times;</button>
+      <h3 style="color: var(--gold-color); margin-bottom: 12px;"><i class="fa-solid fa-circle-info"></i> <span data-i18n="match_rules">Match Rules & Details</span></h3>
+      <div id="match-details-content" style="color: #ddd; font-size: 14px; line-height: 1.6; max-height: 300px; overflow-y: auto; text-align: left; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+        <!-- Rules content injected via JS -->
+      </div>
+      <button class="btn-primary-glow" style="margin-top: 15px;" onclick="closeDetailsModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- ==================== JOIN WIZARD MODAL ==================== -->
   <div id="join-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <button class="modal-close" onclick="closeJoinModal()">&times;</button>
       
-      <!-- Wizard Step 1: In-Game Credentials -->
-      <div id="wizard-step-1" class="wizard-step active">
+      <!-- Wizard Step 1: Team & Slot Selection (Duo / Squad only) -->
+      <div id="wizard-step-0" class="wizard-step">
+        <h3 data-i18n="select_team">টিম ও স্লট সিলেক্ট করুন</h3>
+        <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 10px;">যেকোনো ফাঁকা স্লটে ক্লিক করে আপনার স্থান নির্বাচন করুন:</p>
+        <div id="team-slots-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px;"></div>
+        <button class="btn-primary-glow" onclick="proceedToCredentialsStep()" data-i18n="next_step">পরবর্তী ধাপ</button>
+      </div>
+
+      <!-- Wizard Step 2: In-Game Credentials -->
+      <div id="wizard-step-1" class="wizard-step">
         <h3 data-i18n="join_tournament">টুর্নামেন্টে জয়েন করুন</h3>
         <p data-i18n="enter_ff_details">আপনার সঠিক Free Fire গেম তথ্য লিখুন:</p>
         <div class="form-group">
@@ -288,7 +312,7 @@
         <button class="btn-primary-glow" onclick="goToWizardStep(2)" data-i18n="next_step">পরবর্তী ধাপ</button>
       </div>
 
-      <!-- Wizard Step 2: Payment Confirmation -->
+      <!-- Wizard Step 3: Payment Confirmation -->
       <div id="wizard-step-2" class="wizard-step">
         <h3 data-i18n="confirm_entry">এন্ট্রি ফি নিশ্চিত করুন</h3>
         <p data-i18n="fee_deduct_note">এন্ট্রি ফি আপনার ব্যালেন্স থেকে কেটে নেওয়া হবে।</p>
@@ -324,4 +348,4 @@
   <!-- Module Script Import -->
   <script type="module" src="app.js"></script>
 </body>
-</html>
+            </html>

@@ -30,14 +30,14 @@ const db = getFirestore(app);
 
 let allMatchesMap = {};
 
-// AUTH MONITORING (দ্বিগুণ সিকিউরিটি চেক)
+// AUTH MONITORING
 onAuthStateChanged(auth, (user) => {
   if (user && user.email === ALLOWED_ADMIN_EMAIL && user.uid === ALLOWED_ADMIN_UID) {
     document.getElementById("login-overlay").classList.add("hidden");
     document.getElementById("admin-panel").classList.remove("hidden");
     initAdminData();
   } else {
-    if (user) signOut(auth); // শর্ত না মিললে তাৎক্ষণিক সাইন-আউট
+    if (user) signOut(auth);
     document.getElementById("login-overlay").classList.remove("hidden");
     document.getElementById("admin-panel").classList.add("hidden");
   }
@@ -76,6 +76,11 @@ window.switchTab = function(tabName, btn) {
   document.getElementById(`tab-${tabName}`).classList.add("active");
 };
 
+// MODAL HELPERS
+window.closeModal = function(modalId) {
+  document.getElementById(modalId).classList.add("hidden");
+};
+
 // INITIALIZE ADMIN DATA
 function initAdminData() {
   listenAdminMatches();
@@ -84,14 +89,23 @@ function initAdminData() {
   listenAdminUsers();
 }
 
-// --- MATCHES MANAGEMENT WITH INLINE ROOM CODE PUBLISHING ---
+// --- MATCHES MANAGEMENT ---
 window.createNewMatch = async function() {
   const title = document.getElementById("match-title").value.trim();
+  const maxSlots = parseInt(document.getElementById("match-slots").value) || 48;
   const category = document.getElementById("match-category").value;
   const matchTime = document.getElementById("match-time").value.trim();
   const entryFee = parseFloat(document.getElementById("match-entry").value) || 0;
-  const totalPrize = parseFloat(document.getElementById("match-prize").value) || 0;
-  const maxSlots = parseInt(document.getElementById("match-slots").value) || 48;
+  const comment = document.getElementById("match-comment").value.trim();
+
+  // Dynamic Prize Inputs
+  const r1 = parseFloat(document.getElementById("prize-rank-1").value) || 0;
+  const r2 = parseFloat(document.getElementById("prize-rank-2").value) || 0;
+  const r3 = parseFloat(document.getElementById("prize-rank-3").value) || 0;
+  const r4 = parseFloat(document.getElementById("prize-rank-4").value) || 0;
+  const r5 = parseFloat(document.getElementById("prize-rank-5").value) || 0;
+
+  const totalPrize = r1 + r2 + r3 + r4 + r5;
 
   if (!title || !matchTime) return alert("সকল প্রয়োজনীয় তথ্য দিন!");
 
@@ -104,14 +118,24 @@ window.createNewMatch = async function() {
       entryFee, 
       totalPrize, 
       maxSlots,
+      comment,
+      prizes: {
+        rank1: r1,
+        rank2: r2,
+        rank3: r3,
+        rank4: r4,
+        rank5: r5
+      },
       status: "active",
       players: [],
       roomId: "",
       roomPass: "",
+      winners: {},
       createdAt: Date.now()
     });
     alert("ম্যাচ সফলভাবে পাবলিশ হয়েছে!");
     document.getElementById("match-title").value = "";
+    document.getElementById("match-comment").value = "";
   } catch (e) {
     alert("এরর: " + e.message);
   }
@@ -129,10 +153,12 @@ function listenAdminMatches() {
       const matchId = docSnap.id;
       allMatchesMap[matchId] = m;
 
-      // Table Row with inline Room ID and Pass inputs
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><strong>${m.title}</strong></td>
+        <td>
+          <strong>${m.title}</strong>
+          ${m.comment ? `<br><small style="color:var(--gold-color);">${m.comment}</small>` : ''}
+        </td>
         <td>${m.category}</td>
         <td>৳${m.entryFee}</td>
         <td>${(m.players || []).length}/${m.maxSlots}</td>
@@ -140,11 +166,15 @@ function listenAdminMatches() {
           <div style="display:flex; flex-direction:column; gap:4px; max-width: 140px;">
             <input type="text" id="room-id-${matchId}" placeholder="Room ID" value="${m.roomId || ''}" style="padding:4px; font-size:12px; background:#1e1e2d; color:#fff; border:1px solid #333; border-radius:4px;">
             <input type="text" id="room-pass-${matchId}" placeholder="Room Pass" value="${m.roomPass || ''}" style="padding:4px; font-size:12px; background:#1e1e2d; color:#fff; border:1px solid #333; border-radius:4px;">
-            <button class="btn-action btn-approve" style="font-size:11px; padding:3px 6px;" onclick="publishRoomDetails('${matchId}')">Save & Alert</button>
+            <button class="btn-action btn-approve" style="font-size:11px; padding:3px 6px;" onclick="publishRoomDetails('${matchId}')">Save & Alert Bot</button>
           </div>
         </td>
         <td>
-          <button class="btn-action btn-delete" onclick="deleteMatch('${matchId}')">Delete</button>
+          <div style="display:flex; gap:4px; flex-wrap:wrap;">
+            <button class="btn-action btn-approve" style="background:#ffa502; color:#000;" onclick="openWinnersModal('${matchId}')"><i class="fa-solid fa-trophy"></i> Winners</button>
+            <button class="btn-action" style="background:#70a1ff; color:#000;" onclick="openEditMatchModal('${matchId}')"><i class="fa-solid fa-pen"></i> Edit</button>
+            <button class="btn-action btn-delete" onclick="deleteMatch('${matchId}')"><i class="fa-solid fa-trash"></i></button>
+          </div>
         </td>
       `;
       tbody.appendChild(tr);
@@ -152,7 +182,7 @@ function listenAdminMatches() {
   });
 }
 
-// Publish Room ID & Pass directly for a specific match
+// Publish Room ID & Pass directly + Send Telegram Notification
 window.publishRoomDetails = async function(matchId) {
   const roomIdInput = document.getElementById(`room-id-${matchId}`);
   const roomPassInput = document.getElementById(`room-pass-${matchId}`);
@@ -168,7 +198,6 @@ window.publishRoomDetails = async function(matchId) {
   if (!selectedMatch) return alert("ম্যাচ ডাটা পাওয়া যায়নি!");
 
   try {
-    // Update match document directly
     const matchRef = doc(db, "tournaments", matchId);
     await updateDoc(matchRef, {
       roomId: roomId,
@@ -178,12 +207,44 @@ window.publishRoomDetails = async function(matchId) {
 
     alert("রুম আইডি ও পাসওয়ার্ড সফলভাবে আপডেট করা হয়েছে!");
 
-    // Send Telegram Notification to joined players only
+    // Send Telegram Notification to joined players
     const joinedPlayers = selectedMatch.players || [];
     if (joinedPlayers.length > 0) {
       await notifyJoinedPlayers(joinedPlayers, selectedMatch.title, roomId, roomPass);
     }
   } catch (e) {
+    alert("এরর: " + e.message);
+  }
+};
+
+// EDIT MATCH
+window.openEditMatchModal = function(matchId) {
+  const m = allMatchesMap[matchId];
+  if (!m) return;
+
+  document.getElementById("edit-match-id").value = matchId;
+  document.getElementById("edit-match-title").value = m.title || "";
+  document.getElementById("edit-match-time").value = m.matchTime || "";
+  document.getElementById("edit-match-entry").value = m.entryFee || 0;
+  document.getElementById("edit-match-comment").value = m.comment || "";
+
+  document.getElementById("modal-edit-match").classList.remove("hidden");
+};
+
+window.saveMatchEdit = async function() {
+  const matchId = document.getElementById("edit-match-id").value;
+  const title = document.getElementById("edit-match-title").value.trim();
+  const matchTime = document.getElementById("edit-match-time").value.trim();
+  const entryFee = parseFloat(document.getElementById("edit-match-entry").value) || 0;
+  const comment = document.getElementById("edit-match-comment").value.trim();
+
+  try {
+    await updateDoc(doc(db, "tournaments", matchId), {
+      title, matchTime, entryFee, comment
+    });
+    alert("ম্যাচ তথ্য সফলভাবে আপডেট হয়েছে!");
+    closeModal("modal-edit-match");
+  } catch(e) {
     alert("এরর: " + e.message);
   }
 };
@@ -194,7 +255,88 @@ window.deleteMatch = async function(id) {
   }
 };
 
-// --- DEPOSITS MANAGEMENT ---
+// WINNERS SELECTION & AUTOMATIC PRIZE CREDIT
+window.openWinnersModal = function(matchId) {
+  const m = allMatchesMap[matchId];
+  if (!m) return;
+
+  document.getElementById("winner-match-id").value = matchId;
+  const players = m.players || [];
+
+  for (let i = 1; i <= 5; i++) {
+    const select = document.getElementById(`select-winner-${i}`);
+    select.innerHTML = `<option value="">-- Select Winner (${i}st/nd/rd/th) --</option>`;
+    
+    players.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.userId || p.id || p.uid || p;
+      opt.textContent = `${p.gameName || p.name || p.username || opt.value} (${p.gameUid || ''})`;
+      select.appendChild(opt);
+    });
+
+    if (m.winners && m.winners[`rank${i}`]) {
+      select.value = m.winners[`rank${i}`].userId || "";
+    }
+  }
+
+  document.getElementById("modal-select-winners").classList.remove("hidden");
+};
+
+window.submitMatchWinners = async function() {
+  const matchId = document.getElementById("winner-match-id").value;
+  const m = allMatchesMap[matchId];
+  if (!m) return;
+
+  const prizes = m.prizes || {};
+  const winnersData = {};
+  const userUpdates = [];
+
+  for (let i = 1; i <= 5; i++) {
+    const userId = document.getElementById(`select-winner-${i}`).value;
+    const prizeAmount = prizes[`rank${i}`] || 0;
+
+    if (userId) {
+      winnersData[`rank${i}`] = {
+        userId: userId,
+        prize: prizeAmount
+      };
+      
+      // Credit prize money to user
+      if (prizeAmount > 0) {
+        userUpdates.push({ userId, prizeAmount });
+      }
+    }
+  }
+
+  try {
+    // 1. Update Winners in Tournament Document
+    await updateDoc(doc(db, "tournaments", matchId), {
+      winners: winnersData,
+      status: "completed"
+    });
+
+    // 2. Add Balance to Each Winner
+    for (const win of userUpdates) {
+      const uRef = doc(db, "users", win.userId);
+      const uSnap = await getDoc(uRef);
+      if (uSnap.exists()) {
+        const curBal = uSnap.data().balance || 0;
+        const curWins = uSnap.data().wins || 0;
+        await updateDoc(uRef, {
+          balance: curBal + win.prizeAmount,
+          wins: curWins + 1
+        });
+      }
+    }
+
+    alert("উইনার নির্বাচন ও প্রাইস মানি সফলভাবে প্রদান করা হয়েছে!");
+    closeModal("modal-select-winners");
+  } catch (e) {
+    alert("এরর: " + e.message);
+  }
+};
+
+// --- DEPOSITS MANAGEMENT (WITH DATE & TIME) ---
 function listenAdminDeposits() {
   onSnapshot(collection(db, "deposits"), (snap) => {
     const tbody = document.getElementById("admin-deposits-table");
@@ -202,11 +344,23 @@ function listenAdminDeposits() {
     tbody.innerHTML = "";
     snap.forEach((docSnap) => {
       const d = docSnap.data();
+      
+      // Formatting Date and Time
+      let formattedDate = "N/A";
+      if (d.createdAt) {
+        const dateObj = new Date(d.createdAt);
+        formattedDate = dateObj.toLocaleString('bn-BD', { dateStyle: 'short', timeStyle: 'short' });
+      } else if (d.timestamp) {
+        const dateObj = d.timestamp.toDate ? d.timestamp.toDate() : new Date(d.timestamp);
+        formattedDate = dateObj.toLocaleString('bn-BD', { dateStyle: 'short', timeStyle: 'short' });
+      }
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${d.user_name || d.user_id}</td>
         <td>৳${d.amount}</td>
         <td><code>${d.trx_id}</code></td>
+        <td style="font-size: 11px; color: var(--gold-color);">${formattedDate}</td>
         <td><span class="status-badge status-${(d.status||'pending').toLowerCase()}">${d.status}</span></td>
         <td>
           ${d.status === "Pending" ? `

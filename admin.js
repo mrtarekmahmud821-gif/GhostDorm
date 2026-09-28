@@ -30,14 +30,14 @@ const db = getFirestore(app);
 
 let allMatchesMap = {};
 
-// AUTH MONITORING
+// AUTH MONITORING (দ্বিগুণ সিকিউরিটি চেক)
 onAuthStateChanged(auth, (user) => {
   if (user && user.email === ALLOWED_ADMIN_EMAIL && user.uid === ALLOWED_ADMIN_UID) {
     document.getElementById("login-overlay").classList.add("hidden");
     document.getElementById("admin-panel").classList.remove("hidden");
     initAdminData();
   } else {
-    if (user) signOut(auth);
+    if (user) signOut(auth); // শর্ত না মিললে তাৎক্ষণিক সাইন-আউট
     document.getElementById("login-overlay").classList.remove("hidden");
     document.getElementById("admin-panel").classList.add("hidden");
   }

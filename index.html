@@ -20,7 +20,7 @@
 </head>
 <body>
 
-  <!-- App Header -->
+  <!-- ==================== APP HEADER ==================== -->
   <header class="app-header">
     <div class="user-profile">
       <img id="header-user-avatar" src="https://via.placeholder.com/80" alt="Avatar">
@@ -30,9 +30,9 @@
       </div>
     </div>
     
-    <!-- Language Switcher & Wallet -->
-    <div class="header-right-box" style="display: flex; align-items: center; gap: 10px;">
-      <select id="language-selector" onchange="changeLanguage(this.value)" style="background: #11141e; color: #fff; border: 1px solid var(--border-color); padding: 4px 8px; border-radius: 6px; font-size: 12px; outline: none;">
+    <!-- Language Switcher & Wallet Balance -->
+    <div class="header-right-box">
+      <select id="language-selector" class="language-selector" onchange="changeLanguage(this.value)">
         <option value="bn">🇧🇩 বাংলা</option>
         <option value="en">🇬🇧 English</option>
       </select>
@@ -44,10 +44,10 @@
     </div>
   </header>
 
-  <!-- Main View Content -->
+  <!-- ==================== MAIN CONTENT ==================== -->
   <main class="main-content">
 
-    <!-- PAGE 1: HOME PAGE -->
+    <!-- PAGE 1: HOME PAGE (CATEGORIES & MATCHES) -->
     <section id="page-home" class="page-section active">
       <!-- Winner Banner -->
       <div class="winner-card">
@@ -60,10 +60,10 @@
 
       <h3 class="section-title"><i class="fa-solid fa-gamepad"></i> <span data-i18n="select_category">টুর্নামেন্ট ক্যাটাগরি সিলেক্ট করুন</span></h3>
       
-      <!-- 6 Category Cards Grid -->
+      <!-- Tournament Categories Grid -->
       <div id="category-list-view" class="match-categories-grid">
         
-        <!-- 1. Lone Wolf Solo 1V1 -->
+        <!-- Category 1: Lone Wolf Solo 1V1 -->
         <div class="category-card" onclick="openCategoryMatches('lone_wolf_1v1')">
           <div class="card-overlay">
             <div>
@@ -74,7 +74,7 @@
           </div>
         </div>
 
-        <!-- 2. Lone Wolf Duo 2V2 -->
+        <!-- Category 2: Lone Wolf Duo 2V2 -->
         <div class="category-card" onclick="openCategoryMatches('lone_wolf_2v2')">
           <div class="card-overlay">
             <div>
@@ -85,7 +85,7 @@
           </div>
         </div>
 
-        <!-- 3. Clash Squad 4V4 -->
+        <!-- Category 3: Clash Squad 4V4 -->
         <div class="category-card" onclick="openCategoryMatches('clash_squad_4v4')">
           <div class="card-overlay">
             <div>
@@ -96,7 +96,7 @@
           </div>
         </div>
 
-        <!-- 4. Battle Royale Solo -->
+        <!-- Category 4: Battle Royale Solo -->
         <div class="category-card" onclick="openCategoryMatches('br_solo')">
           <div class="card-overlay">
             <div>
@@ -107,7 +107,7 @@
           </div>
         </div>
 
-        <!-- 5. Battle Royale Duo -->
+        <!-- Category 5: Battle Royale Duo -->
         <div class="category-card" onclick="openCategoryMatches('br_duo')">
           <div class="card-overlay">
             <div>
@@ -118,7 +118,7 @@
           </div>
         </div>
 
-        <!-- 6. Battle Royale Squad -->
+        <!-- Category 6: Battle Royale Squad -->
         <div class="category-card" onclick="openCategoryMatches('br_squad')">
           <div class="card-overlay">
             <div>
@@ -131,7 +131,7 @@
 
       </div>
 
-      <!-- Active Matches Container View -->
+      <!-- Active Matches List View -->
       <div id="matches-list-view" class="hidden">
         <button class="btn-back" onclick="backToCategories()">
           <i class="fa-solid fa-arrow-left"></i> <span data-i18n="back_to_categories">ক্যাটাগরিতে ফিরে যান</span>
@@ -141,13 +141,13 @@
       </div>
     </section>
 
-    <!-- PAGE 2: LIVE PAGE -->
+    <!-- PAGE 2: LIVE MATCHES PAGE -->
     <section id="page-live" class="page-section">
       <h3 class="section-title"><i class="fa-solid fa-tower-broadcast"></i> <span data-i18n="live_matches">লাইভ রুম আইডি ও পাসওয়ার্ড</span></h3>
       <div id="live-matches-container"></div>
     </section>
 
-    <!-- PAGE 3: WALLET PAGE -->
+    <!-- PAGE 3: WALLET & TRANSACTIONS PAGE -->
     <section id="page-wallet" class="page-section">
       <div class="wallet-action-card">
         <div class="total-bal-display">
@@ -156,7 +156,7 @@
         </div>
       </div>
 
-      <!-- Wallet Nav Tabs -->
+      <!-- Wallet Tabs Navigation -->
       <div class="wallet-tabs">
         <button class="wallet-tab-btn active" onclick="switchWalletTab('deposit', event)">
           <i class="fa-solid fa-arrow-down-to-line"></i> <span data-i18n="deposit">ডিপোজিট</span>
@@ -169,7 +169,7 @@
         </button>
       </div>
 
-      <!-- Tab 1: Deposit -->
+      <!-- Wallet Tab 1: Deposit -->
       <div id="wallet-tab-deposit" class="wallet-tab-content active">
         <div class="wallet-action-card">
           <h4 data-i18n="deposit_money">টাকা ডিপোজিট করুন</h4>
@@ -179,22 +179,22 @@
           </div>
 
           <div class="dep-tab-content active">
-            <p class="limit-note" id="dep-instruction-text">bKash মার্চেন্ট নাম্বারে (Make Payment) করুন:</p>
+            <p class="limit-note" id="dep-instruction-text" data-i18n="bkash_payment_note">bKash মার্চেন্ট নাম্বারে (Make Payment) করুন:</p>
             <div class="copy-number-box">
               <strong id="dep-phone-number">01816640707</strong>
               <button onclick="copyNumber('dep-phone-number')"><i class="fa-solid fa-copy"></i> <span data-i18n="copy">কপি</span></button>
             </div>
           </div>
 
-          <div class="form-group" style="margin-top: 15px;">
-            <input type="number" id="dep-amount" class="gaming-input" placeholder="ডিপোজিট পরিমাণ (সর্বনিম্ন ৳৫০)">
-            <input type="text" id="dep-trxid" class="gaming-input" placeholder="Transaction ID (TrxID) দিন">
+          <div class="form-group form-spacing">
+            <input type="number" id="dep-amount" class="gaming-input" placeholder="ডিপোজিট পরিমাণ (সর্বনিম্ন ৳৫০)" data-i18n-ph="deposit_amount_ph">
+            <input type="text" id="dep-trxid" class="gaming-input" placeholder="Transaction ID (TrxID) দিন" data-i18n-ph="trxid_ph">
             <button class="btn-primary-glow" onclick="submitDeposit()" data-i18n="submit_deposit">ডিপোজিট রিকোয়েস্ট পাঠান</button>
           </div>
         </div>
       </div>
 
-      <!-- Tab 2: Withdraw -->
+      <!-- Wallet Tab 2: Withdraw -->
       <div id="wallet-tab-withdraw" class="wallet-tab-content">
         <div class="wallet-action-card">
           <h4 data-i18n="withdraw_winnings">টাকা উত্তোলন করুন</h4>
@@ -203,15 +203,15 @@
               <option value="bkash">bKash Personal</option>
               <option value="nagad">Nagad Personal</option>
             </select>
-            <input type="text" id="withdraw-number" class="gaming-input" placeholder="অ্যাকাউন্ট মোবাইল নম্বর লিখুন">
-            <input type="number" id="withdraw-amount" class="gaming-input" placeholder="উত্তোলনের পরিমাণ (সর্বনিম্ন ৳১০০)">
+            <input type="text" id="withdraw-number" class="gaming-input" placeholder="অ্যাকাউন্ট মোবাইল নম্বর লিখুন" data-i18n-ph="withdraw_number_ph">
+            <input type="number" id="withdraw-amount" class="gaming-input" placeholder="উত্তোলনের পরিমাণ (সর্বনিম্ন ৳১০০)" data-i18n-ph="withdraw_amount_ph">
             <p class="limit-note" data-i18n="withdraw_time_note">উইথড্র রিকোয়েস্ট ১-১২ ঘণ্টার মধ্যে প্রসেস করা হয়।</p>
             <button class="btn-primary-glow" onclick="submitWithdraw()" data-i18n="submit_withdraw">উইথড্র রিকোয়েস্ট পাঠান</button>
           </div>
         </div>
       </div>
 
-      <!-- Tab 3: History -->
+      <!-- Wallet Tab 3: History -->
       <div id="wallet-tab-history" class="wallet-tab-content">
         <div class="wallet-action-card">
           <h4 data-i18n="transaction_history">লেনদেনের ইতিহাস</h4>
@@ -220,70 +220,70 @@
       </div>
     </section>
 
-<!-- PAGE 4: PROFILE PAGE -->
-<section id="page-profile" class="page-section">
-  
-  <!-- Profile Header Card -->
-  <div class="profile-card user-profile-header">
-    <img id="profile-user-avatar" src="https://via.placeholder.com/80" alt="Profile Picture">
-    <h2 id="profile-user-name">Player Name</h2>
-    <span id="profile-user-id" class="user-username">@username</span>
-    <div class="profile-balance-badge" style="margin-top: 8px;">
-      <span data-i18n="current_balance">Account Balance: </span>
-      <strong>৳ <span id="profile-balance-display">0.00</span></strong>
-    </div>
-  </div>
-
-  <!-- Account Summary & Referral Card -->
-  <div class="profile-card" style="margin-top: 12px;">
-    <h3 data-i18n="account_overview" style="font-size: 15px; margin-bottom: 10px;">Account Overview</h3>
-    
-    <!-- User Stats Grid -->
-    <div class="profile-stats-grid" style="display: flex; gap: 10px;">
-      <div class="stat-box" style="flex: 1; background: #11141e; padding: 12px; border-radius: 8px; text-align: center;">
-        <span id="stat-played" class="stat-val" style="font-size: 18px; font-weight: bold; color: var(--gold-color); display: block;">0</span>
-        <span class="stat-lbl" style="display: block; font-size: 11px; color: var(--text-sub); margin-top: 4px;" data-i18n="matches_played">Matches Played</span>
+    <!-- PAGE 4: USER PROFILE PAGE -->
+    <section id="page-profile" class="page-section">
+      
+      <!-- Profile Header Card -->
+      <div class="profile-card user-profile-header">
+        <img id="profile-user-avatar" src="https://via.placeholder.com/80" alt="Profile Picture">
+        <h2 id="profile-user-name">Player Name</h2>
+        <span id="profile-user-id" class="user-username">@username</span>
+        <div class="profile-balance-badge">
+          <span data-i18n="current_balance_lbl">Account Balance: </span>
+          <strong>৳ <span id="profile-balance-display">0.00</span></strong>
+        </div>
       </div>
-      <div class="stat-box" style="flex: 1; background: #11141e; padding: 12px; border-radius: 8px; text-align: center;">
-        <span id="stat-wins" class="stat-val" style="font-size: 18px; font-weight: bold; color: var(--primary-glow); display: block;">0</span>
-        <span class="stat-lbl" style="display: block; font-size: 11px; color: var(--text-sub); margin-top: 4px;" data-i18n="total_wins">Total Wins</span>
+
+      <!-- Account Overview & Referral Stats Card -->
+      <div class="profile-card profile-card-space">
+        <h3 class="profile-title" data-i18n="account_overview">Account Overview</h3>
+        
+        <!-- User Gameplay Stats Grid -->
+        <div class="profile-stats-grid">
+          <div class="stat-box">
+            <span id="stat-played" class="stat-val stat-gold">0</span>
+            <span class="stat-lbl" data-i18n="matches_played">Matches Played</span>
+          </div>
+          <div class="stat-box">
+            <span id="stat-wins" class="stat-val stat-glow">0</span>
+            <span class="stat-lbl" data-i18n="total_wins">Total Wins</span>
+          </div>
+        </div>
+
+        <!-- Referral Bonus Box -->
+        <div class="stat-box referral-stat-box">
+          <span id="stat-referrals" class="stat-val stat-green">0</span>
+          <span class="stat-lbl" data-i18n="total_referrals">Total Referrals (৳2 Bonus Each)</span>
+        </div>
+
+        <!-- Referral Link Share Section -->
+        <div class="referral-container">
+          <label class="referral-label" data-i18n="referral_link_label">Your Referral Link (Share with friends to earn):</label>
+          <div class="copy-number-box referral-copy-box">
+            <input type="text" id="referral-link-input" class="referral-input" readonly value="Loading link...">
+            <button class="btn-copy-small" onclick="copyNumber('referral-link-input')">
+              <i class="fa-solid fa-copy"></i> <span data-i18n="copy">Copy</span>
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- Referral Stats Box -->
-    <div class="stat-box" style="background: #11141e; padding: 12px; border-radius: 8px; text-align: center; margin-top: 10px;">
-      <span id="stat-referrals" class="stat-val" style="font-size: 18px; font-weight: bold; color: #2ed573; display: block;">0</span>
-      <span class="stat-lbl" style="display: block; font-size: 11px; color: var(--text-sub); margin-top: 4px;" data-i18n="total_referrals">Total Referrals (৳2 Bonus Each)</span>
-    </div>
-
-    <!-- Referral Link Copy Box -->
-    <div style="margin-top: 15px;">
-      <label style="font-size: 12px; color: var(--text-sub); display: block; margin-bottom: 6px;" data-i18n="referral_link_label">Your Referral Link (Share with friends to earn):</label>
-      <div class="copy-number-box" style="display: flex; align-items: center; justify-content: space-between; background: #11141e; padding: 8px 12px; border-radius: 6px; border: 1px solid #222;">
-        <input type="text" id="referral-link-input" readonly style="background: transparent; border: none; color: #fff; width: 75%; font-size: 11px; outline: none;" value="Loading link...">
-        <button onclick="copyNumber('referral-link-input')" style="background: var(--primary-glow, #3742fa); border: none; color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer;">
-          <i class="fa-solid fa-copy"></i> <span data-i18n="copy">Copy</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-</section>
+    </section>
 
   </main>
 
-  <!-- Join Tournament Multi-Step Modal -->
+  <!-- ==================== MODALS & WIZARDS ==================== -->
   <div id="join-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <button class="modal-close" onclick="closeJoinModal()">&times;</button>
       
-      <!-- Wizard Step 1: In-Game Details -->
+      <!-- Wizard Step 1: In-Game Credentials -->
       <div id="wizard-step-1" class="wizard-step active">
         <h3 data-i18n="join_tournament">টুর্নামেন্টে জয়েন করুন</h3>
         <p data-i18n="enter_ff_details">আপনার সঠিক Free Fire গেম তথ্য লিখুন:</p>
         <div class="form-group">
-          <input type="text" id="join-game-name" class="gaming-input" placeholder="Free Fire In-Game Name (IGN)">
-          <input type="text" id="join-game-uid" class="gaming-input" placeholder="Free Fire UID (e.g. 12345678)" style="margin-top: 8px;">
+          <input type="text" id="join-game-name" class="gaming-input" placeholder="Free Fire In-Game Name (IGN)" data-i18n-ph="ign_ph">
+          <input type="text" id="join-game-uid" class="gaming-input input-spacing" placeholder="Free Fire UID (e.g. 12345678)" data-i18n-ph="uid_ph">
         </div>
         <button class="btn-primary-glow" onclick="goToWizardStep(2)" data-i18n="next_step">পরবর্তী ধাপ</button>
       </div>
@@ -301,7 +301,7 @@
     </div>
   </div>
 
-  <!-- Bottom Navigation Bar -->
+  <!-- ==================== BOTTOM NAVIGATION ==================== -->
   <nav class="bottom-nav">
     <button class="nav-item active" onclick="navigateTo('home', this)">
       <i class="fa-solid fa-house"></i>

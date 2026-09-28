@@ -161,8 +161,27 @@ body {
   letter-spacing: 0.5px;
 }
 
+/* Notice Banner */
+.notice-card {
+  background: linear-gradient(135deg, rgba(255, 42, 95, 0.1), rgba(17, 21, 34, 0.9));
+  border: 1px solid var(--accent-glow);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-main);
+}
+
+.notice-card i {
+  color: var(--accent-color);
+  font-size: 18px;
+}
+
 /* ==========================================================================
-   PAGE 1: HOME PAGE
+   PAGE 1: HOME PAGE & CATEGORIES
    ========================================================================== */
 .winner-card {
   background: linear-gradient(135deg, rgba(255, 184, 0, 0.12), rgba(255, 42, 95, 0.08));
@@ -267,6 +286,7 @@ body {
   border: 1px solid var(--border-color);
   margin-bottom: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  position: relative;
 }
 
 .card-header {
@@ -361,6 +381,46 @@ body {
   background: linear-gradient(90deg, #00ff87, #60efff);
   border-radius: 10px;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.joined-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 255, 135, 0.15);
+  color: var(--primary-glow);
+  border: 1px solid rgba(0, 255, 135, 0.3);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Room Details Box */
+.room-details-box {
+  background: rgba(255, 184, 0, 0.08);
+  border: 1px dashed var(--gold-color);
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.room-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.room-info-item:last-child {
+  margin-bottom: 0;
+}
+
+.room-info-val {
+  font-weight: 700;
+  color: var(--gold-color);
+  letter-spacing: 0.5px;
 }
 
 /* ==========================================================================
@@ -874,7 +934,25 @@ body {
   margin-bottom: 14px;
 }
 
+/* Toast Notification Alert */
+.toast-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card-bg-light);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 2000;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  animation: fadeIn 0.3s ease;
+}
+
 /* Utility Helpers */
 .hidden {
   display: none !important;
-  }
+   }

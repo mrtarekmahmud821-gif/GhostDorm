@@ -1,51 +1,43 @@
 // telegram-notify.js
 
-// আপনার টেলিগ্রাম বট টোকেন দিয়ে রিপ্লেস করুন
-const BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN_HERE"; 
-
 /**
- * শুধুমাত্র একটি নির্দিষ্ট ম্যাচে জয়েন করা প্লেয়ারদের টেলিগ্রামে মেসেজ পাঠায়
- * @param {Array} playersList - ম্যাচে জয়েন করা প্লেয়ার অবজেক্ট বা টেলিগ্রাম আইডি তালিকা
- * @param {String} matchTitle - ম্যাচের নাম
- * @param {String} roomId - রুম আইডি
- * @param {String} roomPass - রুম পাসওয়ার্ড
+ * শুধুমাত্র নির্দিষ্ট ম্যাচে জয়েন করা প্লেয়ারদের নোটিফিকেশন পাঠাতে
  */
-export async function notifyJoinedPlayers(playersList, matchTitle, roomId, roomPass) {
+export async function notifyJoinedPlayers(playersList, matchTitle, roomId, roomPass, adminUser) {
   if (!playersList || playersList.length === 0) {
-    alert("এই ম্যাচে কোনো প্লেয়ার জয়েন করেনি। নোটিফিকেশন পাঠানো হয়নি।");
+    alert("এই ম্যাচে কোনো প্লেয়ার জয়েন করেনি।");
     return;
   }
 
-  const messageText = `🎮 *FREE FIRE MATCH ROOM DETAILS* 🎮\n\n` +
-                      `🏆 *Match:* ${matchTitle}\n` +
-                      `🆔 *Room ID:* \`${roomId}\`\n` +
-                      `🔑 *Password:* \`${roomPass}\`\n\n` +
-                      `⚠️ *নোট:* দ্রুত গেমে জয়েন করুন! আইডি ও পাসওয়ার্ড কারও সাথে শেয়ার করবেন না।`;
-
-  let sentCount = 0;
-
-  for (const player of playersList) {
-    // প্লেয়ারের টেলিগ্রাম চ্যাট আইডি সংগ্রহ
-    const chatId = player.telegram_id || player.user_id || player.id;
-
-    if (chatId) {
-      try {
-        const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-        await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: messageText,
-            parse_mode: "Markdown"
-          })
-        });
-        sentCount++;
-      } catch (err) {
-        console.error(`Failed to send message to ${chatId}:`, err);
-      }
-    }
+  if (!roomId || !roomPass) {
+    alert("রুম আইডি এবং পাসওয়ার্ড পূরণ করুন!");
+    return;
   }
 
-  alert(`সাফল্যের সাথে ${sentCount} জন জয়েন করা প্লেয়ারের টেলিগ্রামে রুম ডিটেইলস পাঠানো হয়েছে!`);
+  try {
+    // Vercel Serverless API কল করা
+    const response = await fetch('/api/send-room-details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminUid: adminUser?.uid || 'pLzFxDLJHAQHkjkLRZahcFIcCLD2',
+        adminEmail: adminUser?.email || 'tarekmahmud821@gmail.com',
+        playersList: playersList, // শুধু ওই নির্দিষ্ট ম্যাচের প্লেয়ারদের লিস্ট
+        matchTitle: matchTitle,
+        roomId: roomId,
+        roomPass: roomPass
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert(`সাফল্যের সাথে ${data.count} জন জয়েন করা প্লেয়ারের টেলিগ্রামে রুম ডিটেইলস পাঠানো হয়েছে!`);
+    } else {
+      alert(`এরর: ${data.error}`);
+    }
+  } catch (error) {
+    console.error("Notification Error:", error);
+    alert("মেসেজ পাঠাতে সমস্যা হয়েছে। ইন্টারনেট চেক করুন।");
+  }
 }

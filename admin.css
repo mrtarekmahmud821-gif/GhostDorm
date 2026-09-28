@@ -164,6 +164,12 @@ body {
   gap: 10px;
 }
 
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
 /* Buttons */
 .btn-submit {
   width: 100%;
@@ -189,7 +195,7 @@ body {
 
 .btn-approve { background: var(--primary-glow); color: #000; }
 .btn-reject { background: var(--accent-color); color: #fff; }
-.btn-delete { background: #e74c3c; color: #fff; margin-left: 5px; }
+.btn-delete { background: #e74c3c; color: #fff; }
 
 /* Tables */
 .table-responsive { overflow-x: auto; }
@@ -221,5 +227,45 @@ th {
 .status-pending { background: rgba(255,165,2,0.2); color: var(--gold-color); }
 .status-approved { background: rgba(46,213,115,0.2); color: var(--primary-glow); }
 .status-rejected { background: rgba(255,71,87,0.2); color: var(--accent-color); }
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+}
+
+.modal-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+  position: relative;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+}
+
+.modal-card h3 {
+  color: var(--gold-color);
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px; right: 15px;
+  background: none;
+  border: none;
+  color: var(--text-sub);
+  font-size: 22px;
+  cursor: pointer;
+}
 
 .hidden { display: none !important; }
